@@ -1,0 +1,34 @@
+All files: ['[Content_Types].xml', '_rels/', '_rels/.rels', 'docProps/', 'docProps/app.xml', 'docProps/core.xml', 'docProps/custom.xml', 'xl/', 'xl/_rels/', 'xl/_rels/workbook.xml.rels', 'xl/sharedStrings.xml', 'xl/styles.xml', 'xl/theme/', 'xl/theme/theme1.xml', 'xl/workbook.xml', 'xl/worksheets/', 'xl/worksheets/sheet1.xml']
+
+Has sharedStrings: True
+
+Shared strings count: 371
+First 50 strings: ['业务品牌名称', '目标类型name', '日', 'KA广告投放计划id', '商家ID', '省份', '城市', '投放计划名称', 'KA账号id', '广告消耗', '注册会员人数（直接）', '会员注册成本（人）（直接）', '广告ROI', '交易会员人数', '广告点击次数（计费侧）', '广告曝光次数（计费侧）', '会员注册率（人）', '广告CVR', '广告订单数', '广告CPM', '广告CPC', '广告CTR', '广告订单人数', '广告订单原价交易额', '广告订单实付交易额', '广告原价金额（计费侧）', '霸王茶姬', '最大化新会员注册', '四平', None, 'NULL', '安庆', '最大化老会员转化', '上海', '北京', '成都', '延安', '重庆', '广州', '泰州', '深圳', '大理白族自治州', '石河子', '兴安盟', '贵阳', '焦作', '黔西南布依族苗族自治州', '郑州', '绍兴', '南京']
+
+First row cell refs (A1 notation):
+  A1: val='0' inline=False
+  B1: val='1' inline=False
+  C1: val='2' inline=False
+  D1: val='3' inline=False
+  E1: val='4' inline=False
+  F1: val='5' inline=False
+  G1: val='6' inline=False
+  H1: val='7' inline=False
+  I1: val='8' inline=False
+  J1: val='9' inline=False
+  K1: val='10' inline=False
+  L1: val='11' inline=False
+  M1: val='12' inline=False
+  N1: val='13' inline=False
+  O1: val='14' inline=False
+  P1: val='15' inline=False
+  Q1: val='16' inline=False
+  R1: val='17' inline=False
+  S1: val='18' inline=False
+  T1: val='19' inline=False
+  U1: val='20' inline=False
+  V1: val='21' inline=False
+  W1: val='22' inline=False
+  X1: val='23' inline=False
+  Y1: val='24' inline=False
+  Z1: val='25' inline=False

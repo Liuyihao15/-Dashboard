@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霸王茶姬 · 品牌会员投放 Dashboard V2</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;max-width:1400px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:700;color:#58a6ff;text-shadow:0 0 15px rgba(56,139,253,0.25)}
+.header .sub{color:#8b949e;font-size:14px}
+.filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end}
+.filters .fg{display:flex;flex-direction:column}
+.filters label{font-size:11px;font-weight:600;color:#8b949e;margin-bottom:2px}
+.filters select,.filters input{padding:5px 9px;border:1px solid #30363d;border-radius:6px;font-size:13px;background:#161b22;color:#c9d1d9;outline:none}
+.filters select:focus,.filters input:focus{border-color:#58a6ff;box-shadow:0 0 8px rgba(56,139,253,0.15)}
+.filters .btn{padding:6px 16px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#58a6ff,#1f6feb);color:#fff;font-weight:600}
+.filters .btn:hover{background:linear-gradient(135deg,#79c0ff,#388bfd);box-shadow:0 0 12px rgba(56,139,253,0.3)}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+.kpi-card{background:#161b22;border-radius:10px;padding:12px 14px;border:1px solid #30363d;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.kpi-card .l{font-size:11px;color:#8b949e;margin-bottom:1px}
+.kpi-card .v{font-size:19px;font-weight:700;color:#f0f6fc}
+.kpi-card .s{font-size:11px;color:#6e7681;margin-top:1px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.chart-full{grid-column:1/-1}
+.chart-box{background:#161b22;border-radius:10px;padding:10px;border:1px solid #30363d;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.chart-box h3{font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:4px;padding-left:2px}
+.insight{font-size:11px;color:#8b949e;padding:4px 8px;background:rgba(56,139,253,0.08);border-radius:4px;margin-bottom:6px;border-left:3px solid #58a6ff}
+.week-table{background:#161b22;border-radius:10px;padding:14px;border:1px solid #30363d;box-shadow:0 2px 8px rgba(0,0,0,0.2);margin-bottom:18px;overflow-x:auto}
+.week-table h3{font-size:14px;font-weight:600;color:#c9d1d9;margin-bottom:10px}
+.week-table table{width:100%;border-collapse:collapse;font-size:13px}
+.week-table th{background:rgba(56,139,253,0.12);padding:8px 10px;text-align:center;font-weight:600;color:#8b949e;border:1px solid #30363d}
+.week-table td{padding:7px 10px;text-align:center;border:1px solid #30363d;color:#c9d1d9}
+.week-table td.label{text-align:left;font-weight:600;color:#c9d1d9;background:rgba(22,27,34,0.5)}
+.week-table td.positive{color:#3fb950;font-weight:600}
+.week-table td.negative{color:#f85149;font-weight:600}
+.week-table td.na{color:#6e7681}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🥖 霸王茶姬 · 品牌会员投放 Dashboard V2</h1><div class="sub">2026-05-01 ~ 2026-06-07 (38天) | 拉新+交易会员 | 30省</div></div>
+</div>
+
+<div class="filters">
+  <div class="fg"><label>维度切换</label><select id="dimension"><option value="province">省份</option><option value="city">城市</option></select></div>
+  <div class="fg"><label>时间粒度</label><select id="grain"><option value="day">按日</option><option value="week">按周</option><option value="month">按月</option></select></div>
+  <div class="fg"><label>开始</label><input type="date" id="ds"></div>
+  <div class="fg"><label>结束</label><input type="date" id="de"></div>
+  <div class="fg"><label>目标类型</label><select id="target"><option value="all">全部</option><option value="acq">新会员注册(拉新)</option><option value="ret">老会员转化(交易会员)</option></select></div>
+  <div class="fg"><label>区域</label><select id="region"><option value="all">全部区域</option></select></div>
+  <button class="btn" onclick="applyFilter()">🔄 更新筛选</button>
+</div>
+
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<div class="week-table" id="weekTable">
+  <h3>📅 自然周环比 <span style="font-weight:400;font-size:12px;color:#9ca3af">— 基于选中的筛选条件</span></h3>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:140px">指标</th>
+        <th id="wh1">本周</th>
+        <th id="wl1">上周</th>
+        <th id="wc1">环比</th>
+      </tr>
+    </thead>
+    <tbody id="weekBody">
+      <tr><td class="label">消耗(CA)</td><td id="w_cost_c">-</td><td id="w_cost_p">-</td><td id="w_cost_w">-</td></tr>
+      <tr><td class="label">广告订单人数</td><td id="w_ouser_c">-</td><td id="w_ouser_p">-</td><td id="w_ouser_w">-</td></tr>
+      <tr><td class="label">注册会员数</td><td id="w_mem_c">-</td><td id="w_mem_p">-</td><td id="w_mem_w">-</td></tr>
+      <tr><td class="label">交易会员人数</td><td id="w_trade_c">-</td><td id="w_trade_p">-</td><td id="w_trade_w">-</td></tr>
+      <tr><td class="label">首销会员数</td><td id="w_first_c" class="na">-</td><td id="w_first_p" class="na">-</td><td id="w_first_w" class="na">-</td></tr>
+      <tr><td class="label">注册会员CAC</td><td id="w_cacc_c">-</td><td id="w_cacc_p">-</td><td id="w_cacc_w">-</td></tr>
+      <tr><td class="label">下单用户CAC</td><td id="w_ouserc_c">-</td><td id="w_ouserc_p">-</td><td id="w_ouserc_w">-</td></tr>
+      <tr><td class="label">首销会员CAC</td><td id="w_firstc_c" class="na">-</td><td id="w_firstc_p" class="na">-</td><td id="w_firstc_w" class="na">-</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="chart-grid">
+  <div class="chart-full chart-box">
+    <h3>📈 消耗 & 新增会员趋势（按日）</h3>
+    <div id="insight1" class="insight">加载中...</div>
+    <div id="c1" style="height:320px;"></div>
+  </div>
+  <div class="chart-box">
+    <h3>💰 CAC(注册会员成本) & ROI 趋势</h3>
+    <div id="insight2" class="insight">加载中...</div>
+    <div id="c2" style="height:300px;"></div>
+  </div>
+  <div class="chart-box">
+    <h3>📌 区域效率四象限（新会员 vs 消耗）</h3>
+    <div id="insight5" class="insight">加载中...</div>
+    <div id="c5" style="height:340px;"></div>
+  </div>
+  <div class="chart-box">
+    <h3>🔄 拉新 vs 交易会员 · 按日趋势</h3>
+    <div id="insight6" class="insight">加载中...</div>
+    <div id="c6" style="height:300px;"></div>
+  </div>
+  <div class="chart-box">
+    <h3>🏆 TOP15 区域消耗排行</h3>
+    <div id="insight4" class="insight">加载中...</div>
+    <div id="c4" style="height:340px;"></div>
+  </div>
+  <div class="chart-box">
+    <h3>📊 GMV 贡献排行</h3>
+    <div id="insight3" class="insight">加载中...</div>
+    <div id="c3" style="height:340px;"></div>
+  </div>
+</div>
+
+<script>
+const D = {"dates":["20260501","20260502","20260503","20260504","20260505","20260506","20260507","20260508","20260509","20260510","20260511","20260512","20260513","20260514","20260515","20260516","20260517","20260518","20260519","20260520","20260521","20260522","20260523","20260524","20260525","20260526","20260527","20260528","20260529","20260530","20260531","20260601","20260602","20260603","20260604","20260605","20260606","20260607"],"acq_cost":[67202.44,72629.04,69449.98,67900.6,65561.43,58436.94,60055.32,62785.44,65551.21,65523.38,85833.11,106121.88,129530.38,125661.26,138684.69,128844.87,125055.29,119078.33,158081.95,192485.3,162850.18,168066.79,171192.53,167195.44,163563.37,162942.63,183880.89,162711.01,167204.37,167245.8,164452.98,161742.13,154434.28,123935.49,120237.37,119366.82,115417.93,113102.57],"acq_members":[734,619,511,597,485,549,553,623,638,542,680,1232,2180,1607,1760,1783,1555,1336,1758,2120,1934,2035,2427,2275,1976,1978,2441,1780,1866,1869,1881,1593,1558,1625,1435,1274,1187,1005],"acq_gmv":[1281515.8,965039.3,858374.9,873863.6,817123.5,688240.1,741279.2,790549.0,840176.1,845772.7,1038286.2,1492798.27,1656261.46,1578311.8,1793891.07,1645210.65,1494948.7,1407238.65,1784627.2,2561526.5,1929241.2,2002759.0,1963057.2,1799623.65,1748126.0,1743385.82,2073939.08,1844461.99,1975492.66,1863651.0,1719025.7,1890796.57,1798360.83,1499742.23,1519480.89,1485352.3,1303453.29,1206958.75],"acq_order_users":[28739,22420,20880,20242,19878,17351,17567,18528,19458,17961,21938,29687,33006,31811,36091,33968,32080,28978,36721,51961,39280,40449,41263,39387,36780,36689,42456,38142,40252,39927,38570,38860,37768,30798,31484,30117,27571,27280],"acq_trade_members":[34800,22824,21252,21623,20579,32567,19553,32160,32494,31775,41492,44676,49523,64289,54800,51022,46664,37081,54273,71557,65229,55263,50898,47757,58947,46525,55401,51139,61012,47998,45476,50112,47736,91096,51576,53775,45676,41356],"ret_cost":[3.07,0.0,0.0,0.0,0.0,9707.0,3.69,6436.6,12349.1,12879.84,10993.13,15248.9,14892.17,15938.4,18123.59,20103.93,18853.72,11.42,5171.69,8077.95,35092.65,13505.83,13984.56,13400.81,11790.69,12374.66,10242.45,12047.5,13004.51,13144.8,12320.42,12377.79,11819.6,20292.34,31605.25,31861.3,34673.43,31681.24],"ret_members":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],"ret_order_users":[0,0,0,0,0,2782,1,1740,3562,3222,2742,3377,3256,3230,3718,3939,3733,0,896,1686,5623,2185,2093,2035,1783,1865,1574,1825,2041,1964,1822,1825,1776,3650,6396,5898,6277,5874],"provinces":["广东","江苏","浙江","河南","山东","北京","上海","河北","重庆","江西","贵州","安徽","广西","陕西","天津","四川","湖北","甘肃","山西","新疆","内蒙古","海南","云南","吉林","青海","辽宁","宁夏","黑龙江","福建","湖南"],"prov_cost":[948339.12,688317.38,320088.65,283747.75,277845.53,268610.02,235338.07,195172.84,177900.23,162687.89,146920.41,143158.94,127925.02,124898.99,119316.86,111855.8,99645.22,99114.35,87249.28,84612.22,83281.28,81807.1,66719.53,65809.09,48550.14,46972.9,45158.39,31500.49,30397.0,5859.62],"prov_members":[8841,8049,4144,3718,3594,1726,1321,2832,1381,2208,1356,1652,1438,1166,1071,1323,1133,1005,892,710,602,724,550,526,309,366,457,302,446,0],"prov_gmv":[12140689.52,9278446.68,3575761.09,3186572.3,2736883.95,2262640.4,2095485.9,2359484.1,1699742.3,1874203.1,2223034.1,1653919.35,1627131.2,1203130.9,1058684.4,1981639.5,1313363.2,1211466.1,789214.8,1029346.9,811509.4,1132023.6,688649.5,597171.5,737629.3,390934.2,474671.6,247989.35,426060.8,78000.0],"prov_cac":[107.27,85.52,77.24,76.32,77.31,155.63,178.15,68.92,128.82,73.68,108.35,86.66,88.96,107.12,111.41,84.55,87.95,98.62,97.81,119.17,138.34,112.99,121.31,125.11,157.12,128.34,98.81,104.31,68.15,0],"prov_roi":[12.8,13.48,11.17,11.23,9.85,8.42,8.9,12.09,9.55,11.52,15.13,11.55,12.72,9.63,8.87,17.72,13.18,12.22,9.05,12.17,9.74,13.84,10.32,9.07,15.19,8.32,10.51,7.87,14.02,13.31],"prov_new_cost":[832375.84,638125.25,305224.58,262934.3,273439.0,252274.59,209740.52,182816.53,161385.18,145534.33,138175.7,138158.11,110961.58,111910.44,101860.63,103001.67,91663.86,84967.51,69992.09,70529.32,71488.38,67449.59,58674.61,51287.22,38107.76,46576.68,34306.78,26413.34,26671.75,0.0],"prov_new_members":[8841,8049,4144,3717,3594,1726,1320,2832,1381,2208,1356,1651,1438,1166,1071,1323,1133,1005,892,710,602,724,550,526,309,366,457,302,446,0],"cities":["广东","江苏","浙江","河南","山东","北京","上海","河北","重庆","江西","贵州","安徽","广西","陕西","天津","四川","湖北","甘肃","山西","新疆","海南","云南","吉林","青海","辽宁","内蒙古(山西)","宁夏","黑龙江","福建","内蒙古(西北)","内蒙古(辽宁)","湖南"],"city_cost":[948339.12,688317.38,320088.65,283747.75,277845.53,268610.02,235338.07,195172.84,177900.23,162687.89,146920.41,143158.94,127925.02,124898.99,119316.86,111855.8,99645.22,99114.35,87249.28,84612.22,81807.1,66719.53,65809.09,48550.14,46972.9,46317.49,45158.39,31500.49,30397.0,22887.68,14076.11,5859.62],"city_members":[8841,8049,4144,3718,3594,1726,1321,2832,1381,2208,1356,1652,1438,1166,1071,1323,1133,1005,892,710,724,550,526,309,366,280,457,302,446,222,100,0],"city_gmv":[12140689.52,9278446.68,3575761.09,3186572.3,2736883.95,2262640.4,2095485.9,2359484.1,1699742.3,1874203.1,2223034.1,1653919.35,1627131.2,1203130.9,1058684.4,1981639.5,1313363.2,1211466.1,789214.8,1029346.9,1132023.6,688649.5,597171.5,737629.3,390934.2,390973.1,474671.6,247989.35,426060.8,267834.1,152702.2,78000.0],"city_roi":[12.8,13.48,11.17,11.23,9.85,8.42,8.9,12.09,9.55,11.52,15.13,11.55,12.72,9.63,8.87,17.72,13.18,12.22,9.05,12.17,13.84,10.32,9.07,15.19,8.32,8.44,10.51,7.87,14.02,11.7,10.85,13.31],"city_cac":[107.27,85.52,77.24,76.32,77.31,155.63,178.15,68.92,128.82,73.68,108.35,86.66,88.96,107.12,111.41,84.55,87.95,98.62,97.81,119.17,112.99,121.31,125.11,157.12,128.34,165.42,98.81,104.31,68.15,103.1,140.76,0],"city_prov":["广东","江苏","浙江","河南","山东","北京","上海","河北","重庆","江西","贵州","安徽","广西","陕西","天津","四川","湖北","甘肃","山西","新疆","海南","云南","吉林","青海","辽宁","内蒙古","宁夏","黑龙江","福建","内蒙古","内蒙古","湖南"],"kpi":{"total_cost":5208800.11,"total_members":53842,"total_gmv":60885479.04,"total_roi":11.69,"total_cac":96.74,"acq_cost":4714015.42,"acq_members":54001,"acq_cac":87.29},"full_members":[10232,9896,9188,10516,9774,9563,7313,7150,8120,9112,6099,6878,9961,7015,8319,9400,8215,5758,6396,12187,8959,8611,10501,9367,6957,7640,9218,7019,7382,8825,7719,6919,5944,7716,6417,8750,10252,8558]};
+const C = {prim:'#58a6ff',green:'#3fb950',red:'#f85149',yellow:'#d29922',purple:'#bc8cff',orange:'#d47616',bg:'#161b22',grid:'#30363d'};
+let curDim = 'province';
+
+function fmtDate(d) {return d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8);}
+
+document.getElementById('ds').value = fmtDate(D.dates[0]);
+document.getElementById('de').value = fmtDate(D.dates[D.dates.length-1]);
+
+function fillRegionSelect() {
+  const regions = curDim === 'province' ? D.provinces : D.cities;
+  const sel = document.getElementById('region');
+  sel.innerHTML = '<option value="all">全部区域</option>';
+  regions.forEach(r => {var o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o)});
+}
+fillRegionSelect();
+
+document.getElementById('dimension').addEventListener('change', function() {
+  curDim = this.value;
+  fillRegionSelect();
+  applyFilter();
+});
+
+function applyFilter() {
+  const ds = document.getElementById('ds').value.replace(/-/g,'');
+  const de = document.getElementById('de').value.replace(/-/g,'');
+  const target = document.getElementById('target').value;
+  const region = document.getElementById('region').value;
+  const idx = D.dates.map((d,i) => i).filter(i => D.dates[i] >= ds && D.dates[i] <= de);
+  updateKPIs(idx, target);
+  drawCharts(idx, target, region);
+  updateWeekTable(idx, target);
+}
+
+function updateKPIs(idx, target) {
+  let cost, members, gmv;
+  if (target === 'acq') {
+    cost = idx.reduce((s,i) => s + D.acq_cost[i], 0);
+    members = idx.reduce((s,i) => s + D.acq_members[i], 0);
+    gmv = idx.reduce((s,i) => s + D.acq_gmv[i], 0);
+  } else if (target === 'ret') {
+    cost = idx.reduce((s,i) => s + D.ret_cost[i], 0);
+    members = idx.reduce((s,i) => s + D.ret_members[i], 0);
+    gmv = 0;
+  } else {
+    cost = idx.reduce((s,i) => s + D.acq_cost[i] + D.ret_cost[i], 0);
+    members = idx.reduce((s,i) => s + D.acq_members[i] + D.ret_members[i], 0);
+    gmv = idx.reduce((s,i) => s + D.acq_gmv[i], 0);
+  }
+  const tradeMembers = idx.reduce((s,i) => s + D.acq_trade_members[i], 0);
+  const orderUsers = idx.reduce((s,i) => s + (D.acq_order_users[i] || 0) + (D.ret_order_users?.[i] || 0), 0);
+  const roi = gmv / cost || 0;
+  const cac = cost / members || 0;
+  const days = idx.length || 1;
+  document.getElementById('kpiGrid').innerHTML =
+    '<div class=kpi-card><div class=l>总消耗(CA)</div><div class=v>¥'+(cost/10000).toFixed(1)+'万</div><div class=s>日均¥'+(cost/days/10000).toFixed(2)+'万</div></div>' +
+    '<div class=kpi-card><div class=l>注册会员(CAC)</div><div class=v>'+members.toLocaleString()+'人</div><div class=s>CAC ¥'+cac.toFixed(2)+'</div></div>' +
+    '<div class=kpi-card><div class=l>交易会员人数</div><div class=v>'+tradeMembers.toLocaleString()+'人</div><div class=s>注册会员CAC ¥'+cac.toFixed(2)+'</div></div>' +
+    '<div class=kpi-card><div class=l>广告订单人数</div><div class=v>'+orderUsers.toLocaleString()+'人</div><div class=s>下单CAC ¥'+(cost/orderUsers||0).toFixed(2)+'</div></div>' +
+    '<div class=kpi-card><div class=l>总实付GMV</div><div class=v>¥'+(gmv/10000).toFixed(1)+'万</div><div class=s>ROI '+roi.toFixed(2)+'</div></div>' +
+    '<div class=kpi-card><div class=l>日均新增会员</div><div class=v>'+(members/days).toFixed(1)+'</div><div class=s>共'+days+'天数据</div></div>';
+}
+
+function getDimData(target, region) {
+  let names, costs, members, gmv, roi, cac;
+  if (curDim === 'province') {
+    names = D.provinces; costs = D.prov_cost; members = D.prov_members;
+    gmv = D.prov_gmv; roi = D.prov_roi; cac = D.prov_cac;
+  } else {
+    names = D.cities; costs = D.city_cost; members = D.city_members;
+    gmv = D.city_gmv; roi = D.city_roi; cac = D.city_cac;
+  }
+  if (region !== 'all') {
+    const ri = names.indexOf(region);
+    if (ri >= 0) { names = [names[ri]]; costs = [costs[ri]]; members = [members[ri]];
+      gmv = [gmv[ri]]; roi = [roi[ri]]; cac = [cac[ri]]; }
+  }
+  return {names, costs, members, gmv, roi, cac};
+}
+
+function drawCharts(idx, target, region) {
+  const dates = idx.map(i => D.dates[i]);
+  
+  // Chart 1: Trend (with 全量会员)
+  let t1_cost, t1_members, t1_full;
+  if (target === 'acq') { t1_cost = idx.map(i => D.acq_cost[i]); t1_members = idx.map(i => D.acq_members[i]); }
+  else if (target === 'ret') { t1_cost = idx.map(i => D.ret_cost[i]); t1_members = idx.map(i => D.ret_members[i]); }
+  else { t1_cost = idx.map(i => D.acq_cost[i] + D.ret_cost[i]); t1_members = idx.map(i => D.acq_members[i] + D.ret_members[i]); }
+  t1_full = idx.map(i => D.full_members?.[i] || 0);
+  
+  // Convert date strings to ISO format for Plotly
+  const plotDates = dates.map(d => d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8));
+  
+  Plotly.newPlot('c1', [
+    {x: plotDates, y: t1_cost, type:'scatter', mode:'lines+markers', name:'消耗(CA)',
+      line:{color:C.prim,width:2}, marker:{size:5},
+      yaxis:'y', hovertemplate:'%{x|%Y-%m-%d}<br>消耗: ¥%{y:,.2f}<extra></extra>'},
+    {x: plotDates, y: t1_members, type:'scatter', mode:'lines+markers', name:'广告新增会员',
+      line:{color:C.green,width:2}, marker:{size:5},
+      yaxis:'y2', hovertemplate:'%{x|%Y-%m-%d}<br>广告新增: %{y:,}人<extra></extra>'},
+    {x: plotDates, y: t1_full, type:'scatter', mode:'lines+markers', name:'全量会员(存量)',
+      line:{color:C.purple,width:1.5, dash:'dot'}, marker:{size:3},
+      yaxis:'y3', hovertemplate:'%{x|%Y-%m-%d}<br>全量会员: %{y:,}人<extra></extra>'}
+  ], {
+    margin:{l:60,r:80,t:10,b:50}, hovermode:'x unified',
+    xaxis:{type:'date',tickformat:'%m/%d',tickangle:-45,tickfont:{size:10,color:'#f0f6fc'},dtick:'D3'},
+    yaxis:{title:'消耗(¥)',side:'left',showgrid:true,gridcolor:'#30363d',tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    yaxis2:{title:'广告新增(人)',side:'right',overlaying:'y',showgrid:false,tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    yaxis3:{title:'全量会员(人)',side:'right',overlaying:'y',position:0.9,showgrid:false,tickfont:{size:9,color:'#bc8cff'},titlefont:{size:10,color:'#bc8cff'}},
+    legend:{orientation:'h',y:1.08,font:{color:'#f0f6fc'}},
+    paper_bgcolor:'#161b22',plot_bgcolor:'#161b22'
+  }, {responsive:true,displayModeBar:false});
+
+  const avgCost = Math.round(t1_cost.reduce((a,b)=>a+b,0)/t1_cost.length);
+  const maxCI = t1_cost.indexOf(Math.max(...t1_cost));
+  const maxMI = t1_members.indexOf(Math.max(...t1_members));
+  const avgFull = Math.round(t1_full.reduce((a,b)=>a+b,0)/t1_full.length);
+  const avgAcq = Math.round(t1_members.reduce((a,b)=>a+b,0)/t1_members.length);
+  const fullPct = avgFull > 0 ? (avgAcq / avgFull * 100).toFixed(0) : '-';
+  document.getElementById('insight1').textContent =
+    '💡 日均消耗¥'+avgCost+' | 消耗峰值 '+fmtDate(dates[maxCI])+' (¥'+(t1_cost[maxCI]/10000).toFixed(1)+'万) | 广告新增会员峰值 '+fmtDate(dates[maxMI])+' ('+t1_members[maxMI]+'人) | 广告拉新日均'+avgAcq+'人/占全量会员日均'+avgFull+'人的'+fullPct+'%';
+  
+  // Chart 2: CAC & ROI
+  let t2_cac, t2_roi;
+  if (target === 'acq') {
+    t2_cac = idx.map(i => D.acq_cost[i] / (D.acq_members[i]||1));
+    t2_roi = idx.map(i => D.acq_gmv[i] / (D.acq_cost[i]||1));
+  } else if (target === 'ret') {
+    t2_cac = idx.map(i => D.ret_cost[i] / (D.ret_members[i]||1));
+    t2_roi = idx.map(() => 0);
+  } else {
+    t2_cac = idx.map(i => (D.acq_cost[i]+D.ret_cost[i]) / ((D.acq_members[i]+D.ret_members[i])||1));
+    t2_roi = idx.map(i => D.acq_gmv[i] / ((D.acq_cost[i]+D.ret_cost[i])||1));
+  }
+  
+  Plotly.newPlot('c2', [
+    {x: plotDates, y: t2_cac, type:'scatter', mode:'lines+markers', name:'CAC(注册成本)',
+      line:{color:C.red,width:2}, marker:{size:4},
+      yaxis:'y', hovertemplate:'%{x|%Y-%m-%d}<br>CAC: ¥%{y:,.2f}<extra></extra>'},
+    {x: plotDates, y: t2_roi, type:'scatter', mode:'lines+markers', name:'ROI',
+      line:{color:C.yellow,width:2}, marker:{size:4},
+      yaxis:'y2', hovertemplate:'%{x|%Y-%m-%d}<br>ROI: %{y:.2f}<extra></extra>'}
+  ], {
+    margin:{l:50,r:50,t:10,b:50}, hovermode:'x unified',
+    xaxis:{type:'date',tickformat:'%m/%d',tickangle:-45,tickfont:{size:10,color:'#f0f6fc'},dtick:'D3'},
+    yaxis:{title:'CAC(¥)',side:'left',showgrid:true,gridcolor:'#30363d',tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    yaxis2:{title:'ROI',side:'right',overlaying:'y',showgrid:false,rangemode:'tozero',tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    legend:{orientation:'h',y:1.08,font:{color:'#f0f6fc'}},
+    paper_bgcolor:'#161b22',plot_bgcolor:'#161b22'
+  }, {responsive:true,displayModeBar:false});
+  
+  const avgCac = t2_cac.filter(v=>v<1000).reduce((a,b)=>a+b,0)/t2_cac.filter(v=>v<1000).length||0;
+  const avgRoi = t2_roi.reduce((a,b)=>a+b,0)/t2_roi.length;
+  document.getElementById('insight2').textContent =
+    '💡 日均CAC ¥'+avgCac.toFixed(1)+' | 日均ROI '+avgRoi.toFixed(2);
+  
+  // Chart 6: 拉新 vs 交易会员
+  const acqMCs = idx.map(i => D.acq_members[i]);
+  const retMCs = idx.map(i => D.ret_members[i]);
+  const acqCosts = idx.map(i => D.acq_cost[i]/10000);
+  const retCosts = idx.map(i => D.ret_cost[i]/10000);
+  
+  Plotly.newPlot('c6', [
+    {x: plotDates, y: acqMCs, type:'bar', name:'拉新·新增会员',
+      marker:{color:C.green,opacity:0.8},
+      yaxis:'y', hovertemplate:'%{x|%Y-%m-%d}<br>拉新: %{y:,}人<extra></extra>'},
+    {x: plotDates, y: retMCs, type:'bar', name:'交易会员·新增会员',
+      marker:{color:C.prim,opacity:0.8},
+      yaxis:'y', hovertemplate:'%{x|%Y-%m-%d}<br>交易会员: %{y:,}人<extra></extra>'},
+    {x: plotDates, y: acqCosts, type:'scatter', mode:'lines+markers',
+      name:'拉新消耗(¥万)', line:{color:C.green,width:1.5,dash:'dot'}, marker:{size:3},
+      yaxis:'y2', hovertemplate:'%{x|%Y-%m-%d}<br>拉新消耗: ¥%{y:.2f}万<extra></extra>'},
+    {x: plotDates, y: retCosts, type:'scatter', mode:'lines+markers',
+      name:'交易会员消耗(¥万)', line:{color:C.prim,width:1.5,dash:'dot'}, marker:{size:3},
+      yaxis:'y2', hovertemplate:'%{x|%Y-%m-%d}<br>交易会员消耗: ¥%{y:.2f}万<extra></extra>'}
+  ], {
+    barmode:'stack', margin:{l:50,r:60,t:10,b:50}, hovermode:'x unified',
+    xaxis:{type:'date',tickformat:'%m/%d',tickangle:-45,tickfont:{size:10,color:'#f0f6fc'},dtick:'D3'},
+    yaxis:{title:'新增会员',side:'left',showgrid:true,gridcolor:'#30363d',tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    yaxis2:{title:'消耗(¥万)',side:'right',overlaying:'y',showgrid:false,tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    legend:{orientation:'h',y:1.08,font:{color:'#f0f6fc'}},
+    paper_bgcolor:'#161b22',plot_bgcolor:'#161b22'
+  }, {responsive:true,displayModeBar:false});
+  
+  const acqTotal = acqMCs.reduce((a,b)=>a+b,0);
+  const retTotal = retMCs.reduce((a,b)=>a+b,0);
+  document.getElementById('insight6').textContent =
+    '💡 拉新增会员 '+acqTotal.toLocaleString()+'人 | 交易会员新增 '+retTotal+'人 | 拉新占比 '+(acqTotal/(acqTotal+retTotal||1)*100).toFixed(1)+'%';
+  
+  // Chart 4: TOP15 区域消耗排行
+  const dd = getDimData(target, region);
+  const topN = dd.names.slice(0,15).reverse();
+  const topCost = dd.costs.slice(0,15).reverse();
+  
+  Plotly.newPlot('c4', [
+    {x: topCost, y: topN, type:'bar', orientation:'h',
+      marker:{color: topCost.map(c => c > topCost[Math.max(0,Math.floor(topCost.length/2))] ? C.prim : '#79c0ff'), opacity:0.85},
+      hovertemplate:'%{y}<br>消耗: ¥%{x:,.2f}<extra></extra>'}
+  ], {
+    margin:{l:70,r:20,t:5,b:40}, hovermode:'y unified',
+    xaxis:{title:'消耗(¥)', showgrid:true, gridcolor:'#30363d',tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    yaxis:{tickfont:{size:11,color:'#f0f6fc'}, automargin:true},
+    paper_bgcolor:'#161b22', plot_bgcolor:'#161b22'
+  }, {responsive:true,displayModeBar:false});
+  
+  document.getElementById('insight4').textContent =
+    '💡 TOP1: '+dd.names[0]+' (¥'+(dd.costs[0]/10000).toFixed(1)+'万) | TOP3合计: ¥'+((dd.costs[0]+dd.costs[1]+dd.costs[2])/10000).toFixed(1)+'万';
+  
+  // Chart 5: 区域效率四象限气泡图（放在第2位）
+  const bubbleData = dd.names.map((n,i) => ({
+    name: n, cost: dd.costs[i], members: dd.members[i],
+    roi: dd.roi[i], cac: dd.cac[i]
+  })).filter(d => d.cost > 1000 && d.members > 0);
+  
+  if (bubbleData.length > 0) {
+    // Calculate national averages as quadrant center
+    const medianCost = bubbleData.reduce((s,d) => s + d.cost, 0) / bubbleData.length;
+    const medianMembers = bubbleData.reduce((s,d) => s + d.members, 0) / bubbleData.length;
+    
+    // Assign quadrants
+    function getQuadrant(d) {
+      if (d.cost >= medianCost && d.members >= medianMembers) return 'Q1'; // 高消耗高新增
+      if (d.cost < medianCost && d.members >= medianMembers) return 'Q2'; // 低消耗高新增（高效）
+      if (d.cost < medianCost && d.members < medianMembers) return 'Q3'; // 低消耗低新增
+      return 'Q4'; // 高消耗低新增（低效）
+    }
+    
+    const colors = {'Q1': C.prim, 'Q2': C.green, 'Q3': '#8b949e', 'Q4': C.red};
+    const labels = {'Q1': '高消耗·高新增', 'Q2': '低消耗·高新增 ▲高效', 'Q3': '低消耗·低新增', 'Q4': '高消耗·低新增 ▼低效'};
+    
+    const traces = [];
+    for (const q of ['Q1', 'Q2', 'Q3', 'Q4']) {
+      const pts = bubbleData.filter(d => getQuadrant(d) === q);
+      if (pts.length === 0) continue;
+      traces.push({
+        x: pts.map(d => d.cost),
+        y: pts.map(d => d.members),
+        text: pts.map(d => d.name),
+        customdata: pts.map(d => [d.roi, d.cac]),
+        type: 'scatter', mode: 'markers+text',
+        name: labels[q],
+        marker: {
+          size: pts.map(d => Math.max(14, Math.min(70, d.roi * 4))),
+          color: colors[q],
+          line: {color: 'white', width: 1}
+        },
+        textposition: 'top center',
+        textfont: {size: 9, color: '#f0f6fc'},
+        hovertemplate: '%{text}<br>消耗: ¥%{x:,.2f}<br>新增会员: %{y:,}<br>ROI: %{customdata[0]:.2f}<br>CAC: ¥%{customdata[1]:.1f}<extra></extra>'
+      });
+    }
+    
+    // Add quadrant divider lines
+    const xRange = [Math.min(...bubbleData.map(d => d.cost)) * 0.5, Math.max(...bubbleData.map(d => d.cost)) * 2];
+    const yRange = [Math.min(...bubbleData.map(d => d.members)) * 0.5, Math.max(...bubbleData.map(d => d.members)) * 2];
+    
+    Plotly.newPlot('c5', traces, {
+      margin:{l:50,r:50,t:10,b:40},
+      xaxis:{
+        title:'消耗(¥)', type:'log',
+        showgrid:true, gridcolor:'#30363d',
+        tickfont:{color:'#f0f6fc'}, titlefont:{color:'#f0f6fc'},
+        range: [Math.log10(xRange[0]), Math.log10(xRange[1])]
+      },
+      yaxis:{
+        title:'新会员注册数', type:'log',
+        showgrid:true, gridcolor:'#30363d',
+        tickfont:{color:'#f0f6fc'}, titlefont:{color:'#f0f6fc'},
+        range: [Math.log10(yRange[0]), Math.log10(yRange[1])]
+      },
+      shapes: [
+        {type:'line', x0:medianCost, x1:medianCost, y0:yRange[0], y1:yRange[1],
+         line:{color:'rgba(255,255,255,0.3)', dash:'dash', width:1}},
+        {type:'line', x0:xRange[0], x1:xRange[1], y0:medianMembers, y1:medianMembers,
+         line:{color:'rgba(255,255,255,0.3)', dash:'dash', width:1}}
+      ],
+      annotations: [
+        {x:medianCost*3, y:medianMembers*2, text:'高消耗·高新增', showarrow:false, font:{size:9,color:'#8b949e'}},
+        {x:medianCost/3, y:medianMembers*2, text:'低消耗·高新增', showarrow:false, font:{size:9,color:'#3fb950'}},
+        {x:medianCost/3, y:medianMembers/3, text:'低消耗·低新增', showarrow:false, font:{size:9,color:'#8b949e'}},
+        {x:medianCost*3, y:medianMembers/3, text:'高消耗·低新增', showarrow:false, font:{size:9,color:'#f85149'}}
+      ],
+      hovermode:'closest',
+      paper_bgcolor:'#161b22', plot_bgcolor:'#161b22'
+    }, {responsive:true,displayModeBar:false});
+    
+    // Insight: best and worst quadrants
+    const q2Count = bubbleData.filter(d => getQuadrant(d) === 'Q2').length;
+    const q4Count = bubbleData.filter(d => getQuadrant(d) === 'Q4').length;
+    const bestROI = bubbleData.reduce((a,b) => a.roi > b.roi ? a : b);
+    document.getElementById('insight5').textContent =
+      '💡 虚线=全国均值 | Q2高效区'+q2Count+'省 | Q4低效区'+q4Count+'省 | 最佳: '+bestROI.name+' (ROI '+bestROI.roi+', CAC ¥'+bestROI.cac+')';
+  }
+  
+  // Chart 3: GMV
+  const gmvTop15 = dd.names.slice(-15);
+  const gmvVals15 = dd.gmv.slice(-15);
+  
+  Plotly.newPlot('c3', [
+    {x: gmvVals15, y: gmvTop15, type:'bar', orientation:'h',
+      marker:{color: gmvVals15.map(v => v > gmvVals15[Math.floor(gmvVals15.length/2)] ? C.green : '#56d364'), opacity:0.85},
+      hovertemplate:'%{y}<br>GMV: ¥%{x:,.2f}<extra></extra>'}
+  ], {
+    margin:{l:70,r:20,t:5,b:40}, hovermode:'y unified',
+    xaxis:{title:'GMV(¥)', showgrid:true, gridcolor:'#30363d',tickfont:{color:'#f0f6fc'},titlefont:{color:'#f0f6fc'}},
+    yaxis:{tickfont:{size:11,color:'#f0f6fc'}, automargin:true},
+    paper_bgcolor:'#161b22', plot_bgcolor:'#161b22'
+  }, {responsive:true,displayModeBar:false});
+  
+  document.getElementById('insight3').textContent =
+    '💡 TOP1 GMV: '+dd.names[0]+' (¥'+(dd.gmv[0]/10000).toFixed(1)+'万) | TOP3合计: ¥'+((dd.gmv[0]+dd.gmv[1]+dd.gmv[2])/10000).toFixed(1)+'万';
+}
+
+function updateWeekTable(idx, target) {
+  // Natural week calculation: Mon-Sun
+  // Find the latest complete week within the filtered date range
+  const dates = idx.map(i => D.dates[i]);
+  if (dates.length === 0) return;
+  
+  // Get latest date
+  const lastDate = dates[dates.length - 1];
+  const ly = +lastDate.slice(0,4), lm = +lastDate.slice(4,6)-1, ld = +lastDate.slice(6,8);
+  const lastDt = new Date(ly, lm, ld);
+  const dayOfWeek = lastDt.getDay(); // 0=Sun
+  // Find end of last complete week (most recent Sunday)
+  const latestSun = new Date(lastDt);
+  // If today is not Sunday, go back to most recent Sunday
+  latestSun.setDate(lastDt.getDate() - (dayOfWeek === 0 ? 0 : dayOfWeek));
+  
+  const latestMon = new Date(latestSun);
+  latestMon.setDate(latestSun.getDate() - 6); // Mon = Sun - 6
+  
+  const prevSun = new Date(latestMon);
+  prevSun.setDate(latestMon.getDate() - 1);
+  const prevMon = new Date(prevSun);
+  prevMon.setDate(prevSun.getDate() - 6);
+  
+  function fmt(dt) {
+    return '' + dt.getFullYear() +
+      String(dt.getMonth()+1).padStart(2,'0') +
+      String(dt.getDate()).padStart(2,'0');
+  }
+  
+  function dStr(dt) { return String(dt.getMonth()+1)+'/'+String(dt.getDate()).padStart(2,'0'); }
+  
+  const thisStart = fmt(latestMon);
+  const thisEnd = fmt(latestSun);
+  const prevStart = fmt(prevMon);
+  const prevEnd = fmt(prevSun);
+  
+  document.getElementById('wh1').textContent = '本周 '+dStr(latestMon)+'-'+dStr(latestSun);
+  document.getElementById('wl1').textContent = '上周 '+dStr(prevMon)+'-'+dStr(prevSun);
+  
+  // Sum data for current week and previous week
+  function sumData(start, end, field) {
+    let total = 0;
+    for (const d of dates) {
+      if (d >= start && d <= end) {
+        total += D[field][D.dates.indexOf(d)];
+      }
+    }
+    return total;
+  }
+  
+  function sumCost(start, end) {
+    if (target === 'acq') return sumData(start, end, 'acq_cost');
+    if (target === 'ret') return sumData(start, end, 'ret_cost');
+    return sumData(start, end, 'acq_cost') + sumData(start, end, 'ret_cost');
+  }
+  function sumMembers(start, end) {
+    if (target === 'acq') return sumData(start, end, 'acq_members');
+    if (target === 'ret') return sumData(start, end, 'ret_members');
+    return sumData(start, end, 'acq_members') + sumData(start, end, 'ret_members');
+  }
+  
+  const thisCost = sumCost(thisStart, thisEnd);
+  const thisMem = sumMembers(thisStart, thisEnd);
+  const prevCost = sumCost(prevStart, prevEnd);
+  const prevMem = sumMembers(prevStart, prevEnd);
+  const thisCac = thisMem > 0 ? thisCost / thisMem : 0;
+  const prevCac = prevMem > 0 ? prevCost / prevMem : 0;
+  
+  function fmtVal(v) { return '¥' + (v/10000).toFixed(1) + '万'; }
+  function fmtNum(v) { return v.toLocaleString(); }
+  function fmtCac(v) { return '¥' + v.toFixed(2); }
+  function fmtWoW(cur, prev) {
+    if (prev === 0) return '<span style="color:#9ca3af">N/A</span>';
+    const pct = ((cur - prev) / prev * 100);
+    const cls = pct > 0 ? 'positive' : (pct < 0 ? 'negative' : '');
+    const sign = pct > 0 ? '▲' : (pct < 0 ? '▼' : '');
+    return '<span class="'+cls+'">'+sign+Math.abs(pct).toFixed(1)+'%</span>';
+  }
+  
+  document.getElementById('w_cost_c').textContent = fmtVal(thisCost);
+  document.getElementById('w_cost_p').textContent = fmtVal(prevCost);
+  document.getElementById('w_cost_w').innerHTML = fmtWoW(thisCost, prevCost);
+
+  document.getElementById('w_mem_c').textContent = fmtNum(thisMem);
+  document.getElementById('w_mem_p').textContent = fmtNum(prevMem);
+  document.getElementById('w_mem_w').innerHTML = fmtWoW(thisMem, prevMem);
+
+  // First-sale members: no data yet
+  document.getElementById('w_first_c').textContent = '-';
+  document.getElementById('w_first_p').textContent = '-';
+  document.getElementById('w_first_w').textContent = '-';
+  document.getElementById('w_first_c').className = 'na';
+  document.getElementById('w_first_p').className = 'na';
+  document.getElementById('w_first_w').className = 'na';
+
+  // 交易会员人数（WoW）
+  function sumTradeMembers(start, end) {
+    let total = 0;
+    for (const d of dates) {
+      if (d >= start && d <= end) {
+        total += D.acq_trade_members[D.dates.indexOf(d)];
+      }
+    }
+    return total;
+  }
+  const thisTrade = sumTradeMembers(thisStart, thisEnd);
+  const prevTrade = sumTradeMembers(prevStart, prevEnd);
+  document.getElementById('w_trade_c').textContent = fmtNum(thisTrade);
+  document.getElementById('w_trade_p').textContent = fmtNum(prevTrade);
+  document.getElementById('w_trade_w').innerHTML = fmtWoW(thisTrade, prevTrade);
+
+  document.getElementById('w_cacc_c').textContent = fmtCac(thisCac);
+  document.getElementById('w_cacc_p').textContent = fmtCac(prevCac);
+  document.getElementById('w_cacc_w').innerHTML = fmtWoW(thisCac, prevCac);
+  
+  document.getElementById('w_firstc_c').textContent = '-';
+  document.getElementById('w_firstc_p').textContent = '-';
+  document.getElementById('w_firstc_w').textContent = '-';
+  document.getElementById('w_firstc_c').className = 'na';
+  document.getElementById('w_firstc_p').className = 'na';
+  document.getElementById('w_firstc_w').className = 'na';
+  
+  // 广告订单人数 - 从数据中读取（拉新+老客）
+  function sumOrderUsers(start, end) {
+    let total = 0;
+    for (const d of dates) {
+      if (d >= start && d <= end) {
+        const i = D.dates.indexOf(d);
+        total += (D.acq_order_users[i] || 0) + (D.ret_order_users?.[i] || 0);
+      }
+    }
+    return total;
+  }
+  
+  const thisOrderUsers = sumOrderUsers(thisStart, thisEnd);
+  const prevOrderUsers = sumOrderUsers(prevStart, prevEnd);
+  
+  document.getElementById('w_ouser_c').textContent = fmtNum(thisOrderUsers);
+  document.getElementById('w_ouser_p').textContent = fmtNum(prevOrderUsers);
+  document.getElementById('w_ouser_w').innerHTML = fmtWoW(thisOrderUsers, prevOrderUsers);
+  
+  const thisOuserCac = thisOrderUsers > 0 ? thisCost / thisOrderUsers : 0;
+  const prevOuserCac = prevOrderUsers > 0 ? prevCost / prevOrderUsers : 0;
+  document.getElementById('w_ouserc_c').textContent = fmtCac(thisOuserCac);
+  document.getElementById('w_ouserc_p').textContent = fmtCac(prevOuserCac);
+  document.getElementById('w_ouserc_w').innerHTML = fmtWoW(thisOuserCac, prevOuserCac);
+}
+
+applyFilter();
+</script>
+</body>
+</html>

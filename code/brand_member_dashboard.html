@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霸王茶姬 · 品牌会员投放 Dashboard</title>
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;background:#f5f7fa;color:#1a1a2e;padding:20px;max-width:1400px;margin:0 auto}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:22px;font-weight:700;color:#1a1a2e}
+.header .sub{color:#6b7280;font-size:14px}
+.filters{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:flex-end}
+.filters .fg{display:flex;flex-direction:column}
+.filters label{font-size:12px;font-weight:600;color:#374151;margin-bottom:2px}
+.filters select,.filters input{padding:6px 10px;border:1px solid #d1d5db;border-radius:6px;font-size:13px;background:#fff;cursor:pointer}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:#fff;border-radius:10px;padding:14px 16px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.kpi-card .l{font-size:11px;color:#6b7280;margin-bottom:2px}
+.kpi-card .v{font-size:20px;font-weight:700;color:#1a1a2e}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+.chart-full{grid-column:1/-1}
+.chart-box{background:#fff;border-radius:10px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,0.06)}
+.chart-box h3{font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;padding-left:2px}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>🥖 霸王茶姬 · 品牌会员投放 Dashboard</h1><div class="sub">2026-05-01~2026-06-07 (38天)</div></div>
+</div>
+<div class="filters">
+  <div class="fg"><label>时间粒度</label><select id="grain" onchange="redraw()"><option value="day">按日</option><option value="week">按周</option><option value="month">按月</option></select></div>
+  <div class="fg"><label>开始</label><input type="date" id="ds" onchange="redraw()"></div>
+  <div class="fg"><label>结束</label><input type="date" id="de" onchange="redraw()"></div>
+  <div class="fg"><label>目标类型</label><select id="target" onchange="redraw()"><option value="all">全部</option><option value="acq">新会员注册</option><option value="ret">老会员转化</option></select></div>
+  <div class="fg"><label>城市</label><select id="city" onchange="redraw()"><option value="all">全部城市</option></select></div>
+</div>
+<div class="kpi-grid" id="kpiGrid"></div>
+<div class="chart-grid">
+  <div class="chart-full chart-box"><h3>📈 消耗 & 新增会员趋势</h3><div id="c1" style="height:340px;"></div></div>
+  <div class="chart-box"><h3>📊 CPA & ROI 趋势</h3><div id="c2" style="height:300px;"></div></div>
+  <div class="chart-box"><h3>🔄 新增会员 vs 订单数</h3><div id="c3" style="height:300px;"></div></div>
+  <div class="chart-box"><h3>🏆 TOP20 城市消耗排行</h3><div id="c4" style="height:340px;"></div></div>
+  <div class="chart-box"><h3>📌 城市效率矩阵</h3><div id="c5" style="height:340px;"></div></div>
+  <div class="chart-box"><h3>📊 拉新 vs 复购</h3><div id="c6" style="height:300px;"></div></div>
+</div>
+<script>
+const D = {"dates": ["20260501", "20260502", "20260503", "20260504", "20260505", "20260506", "20260507", "20260508", "20260509", "20260510", "20260511", "20260512", "20260513", "20260514", "20260515", "20260516", "20260517", "20260518", "20260519", "20260520", "20260521", "20260522", "20260523", "20260524", "20260525", "20260526", "20260527", "20260528", "20260529", "20260530", "20260531", "20260601", "20260602", "20260603", "20260604", "20260605", "20260606", "20260607"], "cost": [67205.52, 72629.04, 69449.98, 67900.6, 65561.43, 68143.93, 60059.02, 69222.04, 77900.31, 78403.22, 96826.24, 121370.78, 144422.55, 141599.66, 156808.27, 148948.8, 143909.01, 119089.75, 163253.64, 200563.25, 197942.83, 181572.62, 185177.09, 180596.25, 175354.05, 175317.29, 194123.34, 174758.51, 180208.88, 180390.59, 176773.4, 174119.92, 166253.88, 144227.83, 151842.63, 151228.12, 150091.36, 144783.8], "members": [734, 619, 511, 597, 485, 549, 553, 623, 639, 542, 680, 1232, 2180, 1607, 1761, 1783, 1555, 1336, 1758, 2120, 1934, 2035, 2427, 2275, 1976, 1978, 2441, 1780, 1866, 1869, 1881, 1593, 1558, 1625, 1435, 1274, 1188, 1005], "gmv": [945498.52, 709848.95, 631304.07, 641149.41, 600030.63, 578054.29, 544992.46, 635512.41, 729689.93, 741344.43, 866583.34, 1230153.79, 1339191.68, 1284779.43, 1461918.7, 1353638.85, 1234097.18, 1042885.25, 1359651.51, 2002283.7, 1665339.36, 1572894.51, 1570855.23, 1429307.92, 1389675.62, 1392443.21, 1644103.78, 1473833.83, 1590786.92, 1504950.9, 1384729.68, 1535466.27, 1424009.98, 1256535.4, 1348933.95, 1312987.41, 1184470.4, 1075853.95], "orders": [30988, 23374, 20965, 21584, 20597, 20018, 18931, 21871, 24765, 25105, 29815, 40095, 44438, 42907, 48175, 45575, 42705, 35027, 45427, 64678, 55884, 52297, 52566, 49361, 46781, 46528, 53430, 48209, 50767, 49011, 45303, 48683, 47746, 42155, 46785, 44670, 40256, 37449], "roi": [14.07, 9.77, 9.09, 9.44, 9.15, 8.48, 9.07, 9.18, 9.37, 9.46, 8.95, 10.14, 9.27, 9.07, 9.32, 9.09, 8.58, 8.76, 8.33, 9.98, 8.41, 8.66, 8.48, 7.91, 7.92, 7.94, 8.47, 8.43, 8.83, 8.34, 7.83, 8.82, 8.57, 8.71, 8.88, 8.68, 7.89, 7.43], "cpa": [91.56, 117.33, 135.91, 113.74, 135.18, 124.12, 108.61, 111.11, 121.91, 144.66, 142.39, 98.52, 66.25, 88.11, 89.05, 83.54, 92.55, 89.14, 92.86, 94.61, 102.35, 89.22, 76.3, 79.38, 88.74, 88.63, 79.53, 98.18, 96.57, 96.52, 93.98, 109.3, 106.71, 88.76, 105.81, 118.7, 126.34, 144.06], "wkLabels": ["2026-W18", "2026-W19", "2026-W20", "2026-W21", "2026-W22", "2026-W23"], "wkCost": [209284.53, 487190.56, 953885.3, 1228195.44, 1256926.07, 1082547.54], "wkMembers": [1864, 3988, 10798, 13885, 13791, 9678], "wkGmv": [2286651.54, 4470773.56, 8770362.96, 10643217.47, 10380523.93, 9138257.35], "moLabels": ["202605", "202606"], "moCost": [4135481.9, 1082547.54], "moMembers": [44326, 9678], "moGmv": [36551529.46, 9138257.35], "cityNames": ["北京", "广州", "上海", "深圳", "重庆", "苏州", "天津", "佛山", "东莞", "杭州", "南京", "郑州", "无锡", "西安", "南昌", "贵阳", "合肥", "常州", "成都", "武汉"], "cityCosts": [268610.02, 236935.17, 235338.07, 220689.17, 177900.23, 149016.23, 119316.86, 116109.66, 110853.53, 102961.71, 91980.36, 91123.98, 87397.91, 71961.03, 71951.41, 61615.34, 58583.39, 57500.69, 56479.09, 55842.38], "cityMembers": [1726, 2092, 1321, 998, 1381, 1836, 1071, 1212, 1033, 915, 676, 859, 1101, 426, 706, 408, 641, 689, 507, 605], "cityRois": [6.59, 9.34, 7.23, 7.71, 7.25, 10.99, 6.78, 10.53, 10.84, 7.6, 7.42, 6.62, 10.76, 5.61, 6.95, 7.07, 7.14, 9.99, 8.77, 8.37], "acqCost": 0, "acqMembers": 0, "retCost": 0, "retMembers": 0};
+D.cityNames.forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;document.getElementById('city').appendChild(o)});
+var fd=D.dates[0],ld=D.dates[D.dates.length-1];
+document.getElementById('ds').value=fd.slice(0,4)+'-'+fd.slice(4,6)+'-'+fd.slice(6,8);
+document.getElementById('de').value=ld.slice(0,4)+'-'+ld.slice(4,6)+'-'+ld.slice(6,8);
+var C={prim:'#2563eb',green:'#10b981',red:'#ef4444',yellow:'#f59e0b',purple:'#8b5cf6'};
+function fi(){var s=document.getElementById('ds').value.replace(/-/g,''),e=document.getElementById('de').value.replace(/-/g,'');
+  var si=0,ei=D.dates.length-1;
+  for(var i=0;i<D.dates.length;i++){if(D.dates[i]>=s){si=i;break}}
+  for(var i=D.dates.length-1;i>=0;i--){if(D.dates[i]<=e){ei=i;break}}
+  return[si,ei]}
+function uk(){var s=fi(),c=D.cost.slice(s[0],s[1]+1).reduce(function(a,b){return a+b},0);
+  var m=D.members.slice(s[0],s[1]+1).reduce(function(a,b){return a+b},0);
+  var g=D.gmv.slice(s[0],s[1]+1).reduce(function(a,b){return a+b},0);
+  var o=D.orders.slice(s[0],s[1]+1).reduce(function(a,b){return a+b},0);
+  document.getElementById('kpiGrid').innerHTML='<div class=kpi-card><div class=l>总消耗</div><div class=v>'+c.toFixed(2)+'</div></div><div class=kpi-card><div class=l>新增会员</div><div class=v>'+m.toLocaleString()+'</div></div><div class=kpi-card><div class=l>CPA</div><div class=v>'+(m?(c/m).toFixed(2):'0.00')+'</div></div><div class=kpi-card><div class=l>广告 ROI</div><div class=v>'+(c?(g/c).toFixed(2):'0.00')+'</div></div><div class=kpi-card><div class=l>实付 GMV</div><div class=v>'+g.toFixed(2)+'</div></div><div class=kpi-card><div class=l>订单数</div><div class=v>'+o.toLocaleString()+'</div></div>'}
+function redraw(){uk();var g=document.getElementById('grain').value,s=fi();
+  var x,cost,members,gmv,orders,roi,cpa;
+  if(g==='week'&&D.wkLabels.length){x=D.wkLabels;cost=D.wkCost;members=D.wkMembers;gmv=D.wkGmv;
+    roi=cost.map(function(c,i){return gmv[i]/c||0});cpa=cost.map(function(c,i){return members[i]?c/members[i]:0})}
+  else if(g==='month'&&D.moLabels.length){x=D.moLabels;cost=D.moCost;members=D.moMembers;gmv=D.moGmv;
+    roi=cost.map(function(c,i){return gmv[i]/c||0});cpa=cost.map(function(c,i){return members[i]?c/members[i]:0})}
+  else{x=D.dates.slice(s[0],s[1]+1);cost=D.cost.slice(s[0],s[1]+1);members=D.members.slice(s[0],s[1]+1);
+    gmv=D.gmv.slice(s[0],s[1]+1);orders=D.orders.slice(s[0],s[1]+1);roi=D.roi.slice(s[0],s[1]+1);cpa=D.cpa.slice(s[0],s[1]+1)}
+  Plotly.newPlot('c1',[{x,y:cost,type:'scatter',mode:'lines+markers',name:'消耗',line:{color:C.prim,width:2},marker:{size:4},yaxis:'y',hovertemplate:'%{x}<br>消耗: \u00a5%{y:,.2f}<extra></extra>'},{x,y:members,type:'scatter',mode:'lines+markers',name:'新增会员',line:{color:C.green,width:2},marker:{size:4},yaxis:'y2',hovertemplate:'%{x}<br>新增: %{y:,}\u4eba<extra></extra>'}],{margin:{l:60,r:60,t:10,b:40},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10}},yaxis:{title:'\u6d88\u8017 (\u00a5)',side:'left',showgrid:true,gridcolor:'#f0f0f0'},yaxis2:{title:'\u65b0\u589e\u4f1a\u5458',side:'right',overlaying:'y',showgrid:false},legend:{orientation:'h',y:1.08},paper_bgcolor:'white',plot_bgcolor:'white'},{responsive:true,displayModeBar:false})
+  Plotly.newPlot('c2',[{x,y:cpa,type:'scatter',mode:'lines+markers',name:'CPA',line:{color:C.red,width:2},marker:{size:4},yaxis:'y',hovertemplate:'%{x}<br>CPA: \u00a5%{y:,.2f}<extra></extra>'},{x,y:roi,type:'scatter',mode:'lines+markers',name:'ROI',line:{color:C.yellow,width:2},marker:{size:4},yaxis:'y2',hovertemplate:'%{x}<br>ROI: %{y:.2f}<extra></extra>'}],{margin:{l:50,r:50,t:10,b:40},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10}},yaxis:{title:'CPA (\u00a5)',side:'left',showgrid:true,gridcolor:'#f0f0f0'},yaxis2:{title:'ROI',side:'right',overlaying:'y',showgrid:false,rangemode:'tozero'},legend:{orientation:'h',y:1.08},paper_bgcolor:'white',plot_bgcolor:'white'},{responsive:true,displayModeBar:false})
+  Plotly.newPlot('c3',[{x,y:members,type:'bar',name:'新增会员',marker:{color:C.green,opacity:0.7},yaxis:'y',hovertemplate:'%{x}<br>新增: %{y:,}\u4eba<extra></extra>'},{x,y:orders,type:'scatter',mode:'lines+markers',name:'订单数',line:{color:C.purple,width:2},marker:{size:4},yaxis:'y2',hovertemplate:'%{x}<br>订单: %{y:,}<extra></extra>'}],{margin:{l:50,r:50,t:10,b:40},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10}},yaxis:{title:'\u65b0\u589e\u4f1a\u5458',side:'left',showgrid:true,gridcolor:'#f0f0f0'},yaxis2:{title:'\u8ba2\u5355\u6570',side:'right',overlaying:'y',showgrid:false},legend:{orientation:'h',y:1.08},paper_bgcolor:'white',plot_bgcolor:'white'},{responsive:true,displayModeBar:false})
+  Plotly.newPlot('c4',[{x:D.cityNames,y:D.cityCosts,type:'bar',marker:{color:D.cityCosts.map(function(c){return c>D.cityCosts[4]?C.prim:'#93c5fd'}),opacity:0.85},hovertemplate:'%{x}<br>\u6d88\u8017: \u00a5%{y:,.2f}<extra></extra>'}],{margin:{l:50,r:20,t:10,b:80},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10}},yaxis:{title:'\u6d88\u8017 (\u00a5)',showgrid:true,gridcolor:'#f0f0f0'},paper_bgcolor:'white',plot_bgcolor:'white'},{responsive:true,displayModeBar:false})
+  Plotly.newPlot('c5',[{x:D.cityCosts,y:D.cityRois,text:D.cityNames,type:'scatter',mode:'markers+text',marker:{size:D.cityMembers.map(function(m){return Math.max(10,Math.min(60,m/500))}),color:D.cityRois,colorscale:'RdYlGn',showscale:true,colorbar:{title:'ROI',len:0.6,thickness:10}},textposition:'top center',textfont:{size:10},hovertemplate:'%{text}<br>\u6d88\u8017: \u00a5%{x:,.2f}<br>ROI: %{y:.2f}<br>\u65b0\u589e: %{marker.size}k<extra></extra>'}],{margin:{l:50,r:50,t:10,b:40},xaxis:{title:'\u6d88\u8017 (\u00a5)',type:'log',showgrid:true,gridcolor:'#f0f0f0'},yaxis:{title:'ROI',showgrid:true,gridcolor:'#f0f0f0',rangemode:'tozero'},shapes:[{type:'line',x0:Math.min(...D.cityCosts),y0:2,x1:Math.max(...D.cityCosts),y1:2,line:{dash:'dash',color:'#d1d5db',width:1}}],paper_bgcolor:'white',plot_bgcolor:'white'},{responsive:true,displayModeBar:false})
+  Plotly.newPlot('c6',[{x:['\u62c9\u65b0\u00b7\u65b0\u589e\u4f1a\u5458','\u590d\u8d2d\u00b7\u65b0\u589e\u4f1a\u5458'],y:[D.acqMembers,D.retMembers],type:'bar',name:'\u65b0\u589e\u4f1a\u5458',marker:{color:[C.green,C.prim]}},{x:['\u62c9\u65b0\u00b7\u6d88\u8017','\u590d\u8d2d\u00b7\u6d88\u8017'],y:[D.acqCost,D.retCost],type:'bar',name:'\u6d88\u8017',marker:{color:[C.prim,C.purple]}}],{barmode:'group',margin:{l:50,r:20,t:10,b:60},hovermode:'x',xaxis:{type:'category'},yaxis:{title:'\u503c',showgrid:true,gridcolor:'#f0f0f0'},legend:{orientation:'h',y:1.08},paper_bgcolor:'white',plot_bgcolor:'white'},{responsive:true,displayModeBar:false})}
+redraw();
+</script>
+</body>
+</html>
