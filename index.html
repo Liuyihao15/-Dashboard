@@ -7,33 +7,33 @@
 <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;background:#0d1117;color:#c9d1d9;padding:20px;max-width:1400px;margin:0 auto}
+body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;background:#0f1419;color:#e1e8ed;padding:20px;max-width:1400px;margin:0 auto}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
 .header h1{font-size:22px;font-weight:700;color:#58a6ff;text-shadow:0 0 15px rgba(56,139,253,0.25)}
-.header .sub{color:#8b949e;font-size:14px}
+.header .sub{color:#8899a6;font-size:14px}
 .filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end}
 .filters .fg{display:flex;flex-direction:column}
-.filters label{font-size:11px;font-weight:600;color:#8b949e;margin-bottom:2px}
-.filters select,.filters input{padding:5px 9px;border:1px solid #30363d;border-radius:6px;font-size:13px;background:#161b22;color:#c9d1d9;outline:none}
+.filters label{font-size:11px;font-weight:600;color:#8899a6;margin-bottom:2px}
+.filters select,.filters input{padding:5px 9px;border:1px solid #38444d;border-radius:6px;font-size:13px;background:#192734;color:#e1e8ed;outline:none}
 .filters select:focus,.filters input:focus{border-color:#58a6ff;box-shadow:0 0 8px rgba(56,139,253,0.15)}
 .filters .btn{padding:6px 16px;border:none;border-radius:6px;font-size:13px;cursor:pointer;background:linear-gradient(135deg,#58a6ff,#1f6feb);color:#fff;font-weight:600}
 .filters .btn:hover{background:linear-gradient(135deg,#79c0ff,#388bfd);box-shadow:0 0 12px rgba(56,139,253,0.3)}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
-.kpi-card{background:#161b22;border-radius:10px;padding:12px 14px;border:1px solid #30363d;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
-.kpi-card .l{font-size:11px;color:#8b949e;margin-bottom:1px}
-.kpi-card .v{font-size:19px;font-weight:700;color:#f0f6fc}
+.kpi-card{background:#192734;border-radius:10px;padding:12px 14px;border:1px solid #38444d;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.kpi-card .l{font-size:11px;color:#8899a6;margin-bottom:1px}
+.kpi-card .v{font-size:19px;font-weight:700;color:#e1e8ed}
 .kpi-card .s{font-size:11px;color:#6e7681;margin-top:1px}
 .chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
 .chart-full{grid-column:1/-1}
-.chart-box{background:#161b22;border-radius:10px;padding:10px;border:1px solid #30363d;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
-.chart-box h3{font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:4px;padding-left:2px}
-.insight{font-size:11px;color:#8b949e;padding:4px 8px;background:rgba(56,139,253,0.08);border-radius:4px;margin-bottom:6px;border-left:3px solid #58a6ff}
-.week-table{background:#161b22;border-radius:10px;padding:14px;border:1px solid #30363d;box-shadow:0 2px 8px rgba(0,0,0,0.2);margin-bottom:18px;overflow-x:auto}
-.week-table h3{font-size:14px;font-weight:600;color:#c9d1d9;margin-bottom:10px}
+.chart-box{background:#192734;border-radius:10px;padding:10px;border:1px solid #38444d;box-shadow:0 2px 8px rgba(0,0,0,0.2)}
+.chart-box h3{font-size:13px;font-weight:600;color:#e1e8ed;margin-bottom:4px;padding-left:2px}
+.insight{font-size:11px;color:#8899a6;padding:4px 8px;background:rgba(56,139,253,0.08);border-radius:4px;margin-bottom:6px;border-left:3px solid #58a6ff}
+.week-table{background:#192734;border-radius:10px;padding:14px;border:1px solid #38444d;box-shadow:0 2px 8px rgba(0,0,0,0.2);margin-bottom:18px;overflow-x:auto}
+.week-table h3{font-size:14px;font-weight:600;color:#e1e8ed;margin-bottom:10px}
 .week-table table{width:100%;border-collapse:collapse;font-size:13px}
-.week-table th{background:rgba(56,139,253,0.12);padding:8px 10px;text-align:center;font-weight:600;color:#8b949e;border:1px solid #30363d}
-.week-table td{padding:7px 10px;text-align:center;border:1px solid #30363d;color:#c9d1d9}
-.week-table td.label{text-align:left;font-weight:600;color:#c9d1d9;background:rgba(22,27,34,0.5)}
+.week-table th{background:rgba(56,139,253,0.12);padding:8px 10px;text-align:center;font-weight:600;color:#8899a6;border:1px solid #38444d}
+.week-table td{padding:7px 10px;text-align:center;border:1px solid #38444d;color:#e1e8ed}
+.week-table td.label{text-align:left;font-weight:600;color:#e1e8ed;background:rgba(22,27,34,0.5)}
 .week-table td.positive{color:#3fb950;font-weight:600}
 .week-table td.negative{color:#f85149;font-weight:600}
 .week-table td.na{color:#6e7681}
@@ -116,7 +116,7 @@ body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;backgro
 
 <script>
 const D = {"dates":["20260501","20260502","20260503","20260504","20260505","20260506","20260507","20260508","20260509","20260510","20260511","20260512","20260513","20260514","20260515","20260516","20260517","20260518","20260519","20260520","20260521","20260522","20260523","20260524","20260525","20260526","20260527","20260528","20260529","20260530","20260531","20260601","20260602","20260603","20260604","20260605","20260606","20260607"],"acq_cost":[67202.44,72629.04,69449.98,67900.6,65561.43,58436.94,60055.32,62785.44,65551.21,65523.38,85833.11,106121.88,129530.38,125661.26,138684.69,128844.87,125055.29,119078.33,158081.95,192485.3,162850.18,168066.79,171192.53,167195.44,163563.37,162942.63,183880.89,162711.01,167204.37,167245.8,164452.98,161742.13,154434.28,123935.49,120237.37,119366.82,115417.93,113102.57],"acq_members":[734,619,511,597,485,549,553,623,638,542,680,1232,2180,1607,1760,1783,1555,1336,1758,2120,1934,2035,2427,2275,1976,1978,2441,1780,1866,1869,1881,1593,1558,1625,1435,1274,1187,1005],"acq_gmv":[1281515.8,965039.3,858374.9,873863.6,817123.5,688240.1,741279.2,790549.0,840176.1,845772.7,1038286.2,1492798.27,1656261.46,1578311.8,1793891.07,1645210.65,1494948.7,1407238.65,1784627.2,2561526.5,1929241.2,2002759.0,1963057.2,1799623.65,1748126.0,1743385.82,2073939.08,1844461.99,1975492.66,1863651.0,1719025.7,1890796.57,1798360.83,1499742.23,1519480.89,1485352.3,1303453.29,1206958.75],"acq_order_users":[28739,22420,20880,20242,19878,17351,17567,18528,19458,17961,21938,29687,33006,31811,36091,33968,32080,28978,36721,51961,39280,40449,41263,39387,36780,36689,42456,38142,40252,39927,38570,38860,37768,30798,31484,30117,27571,27280],"acq_trade_members":[34800,22824,21252,21623,20579,32567,19553,32160,32494,31775,41492,44676,49523,64289,54800,51022,46664,37081,54273,71557,65229,55263,50898,47757,58947,46525,55401,51139,61012,47998,45476,50112,47736,91096,51576,53775,45676,41356],"ret_cost":[3.07,0.0,0.0,0.0,0.0,9707.0,3.69,6436.6,12349.1,12879.84,10993.13,15248.9,14892.17,15938.4,18123.59,20103.93,18853.72,11.42,5171.69,8077.95,35092.65,13505.83,13984.56,13400.81,11790.69,12374.66,10242.45,12047.5,13004.51,13144.8,12320.42,12377.79,11819.6,20292.34,31605.25,31861.3,34673.43,31681.24],"ret_members":[0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],"ret_order_users":[0,0,0,0,0,2782,1,1740,3562,3222,2742,3377,3256,3230,3718,3939,3733,0,896,1686,5623,2185,2093,2035,1783,1865,1574,1825,2041,1964,1822,1825,1776,3650,6396,5898,6277,5874],"provinces":["广东","江苏","浙江","河南","山东","北京","上海","河北","重庆","江西","贵州","安徽","广西","陕西","天津","四川","湖北","甘肃","山西","新疆","内蒙古","海南","云南","吉林","青海","辽宁","宁夏","黑龙江","福建","湖南"],"prov_cost":[948339.12,688317.38,320088.65,283747.75,277845.53,268610.02,235338.07,195172.84,177900.23,162687.89,146920.41,143158.94,127925.02,124898.99,119316.86,111855.8,99645.22,99114.35,87249.28,84612.22,83281.28,81807.1,66719.53,65809.09,48550.14,46972.9,45158.39,31500.49,30397.0,5859.62],"prov_members":[8841,8049,4144,3718,3594,1726,1321,2832,1381,2208,1356,1652,1438,1166,1071,1323,1133,1005,892,710,602,724,550,526,309,366,457,302,446,0],"prov_gmv":[12140689.52,9278446.68,3575761.09,3186572.3,2736883.95,2262640.4,2095485.9,2359484.1,1699742.3,1874203.1,2223034.1,1653919.35,1627131.2,1203130.9,1058684.4,1981639.5,1313363.2,1211466.1,789214.8,1029346.9,811509.4,1132023.6,688649.5,597171.5,737629.3,390934.2,474671.6,247989.35,426060.8,78000.0],"prov_cac":[107.27,85.52,77.24,76.32,77.31,155.63,178.15,68.92,128.82,73.68,108.35,86.66,88.96,107.12,111.41,84.55,87.95,98.62,97.81,119.17,138.34,112.99,121.31,125.11,157.12,128.34,98.81,104.31,68.15,0],"prov_roi":[12.8,13.48,11.17,11.23,9.85,8.42,8.9,12.09,9.55,11.52,15.13,11.55,12.72,9.63,8.87,17.72,13.18,12.22,9.05,12.17,9.74,13.84,10.32,9.07,15.19,8.32,10.51,7.87,14.02,13.31],"prov_new_cost":[832375.84,638125.25,305224.58,262934.3,273439.0,252274.59,209740.52,182816.53,161385.18,145534.33,138175.7,138158.11,110961.58,111910.44,101860.63,103001.67,91663.86,84967.51,69992.09,70529.32,71488.38,67449.59,58674.61,51287.22,38107.76,46576.68,34306.78,26413.34,26671.75,0.0],"prov_new_members":[8841,8049,4144,3717,3594,1726,1320,2832,1381,2208,1356,1651,1438,1166,1071,1323,1133,1005,892,710,602,724,550,526,309,366,457,302,446,0],"cities":["广东","江苏","浙江","河南","山东","北京","上海","河北","重庆","江西","贵州","安徽","广西","陕西","天津","四川","湖北","甘肃","山西","新疆","海南","云南","吉林","青海","辽宁","内蒙古(山西)","宁夏","黑龙江","福建","内蒙古(西北)","内蒙古(辽宁)","湖南"],"city_cost":[948339.12,688317.38,320088.65,283747.75,277845.53,268610.02,235338.07,195172.84,177900.23,162687.89,146920.41,143158.94,127925.02,124898.99,119316.86,111855.8,99645.22,99114.35,87249.28,84612.22,81807.1,66719.53,65809.09,48550.14,46972.9,46317.49,45158.39,31500.49,30397.0,22887.68,14076.11,5859.62],"city_members":[8841,8049,4144,3718,3594,1726,1321,2832,1381,2208,1356,1652,1438,1166,1071,1323,1133,1005,892,710,724,550,526,309,366,280,457,302,446,222,100,0],"city_gmv":[12140689.52,9278446.68,3575761.09,3186572.3,2736883.95,2262640.4,2095485.9,2359484.1,1699742.3,1874203.1,2223034.1,1653919.35,1627131.2,1203130.9,1058684.4,1981639.5,1313363.2,1211466.1,789214.8,1029346.9,1132023.6,688649.5,597171.5,737629.3,390934.2,390973.1,474671.6,247989.35,426060.8,267834.1,152702.2,78000.0],"city_roi":[12.8,13.48,11.17,11.23,9.85,8.42,8.9,12.09,9.55,11.52,15.13,11.55,12.72,9.63,8.87,17.72,13.18,12.22,9.05,12.17,13.84,10.32,9.07,15.19,8.32,8.44,10.51,7.87,14.02,11.7,10.85,13.31],"city_cac":[107.27,85.52,77.24,76.32,77.31,155.63,178.15,68.92,128.82,73.68,108.35,86.66,88.96,107.12,111.41,84.55,87.95,98.62,97.81,119.17,112.99,121.31,125.11,157.12,128.34,165.42,98.81,104.31,68.15,103.1,140.76,0],"city_prov":["广东","江苏","浙江","河南","山东","北京","上海","河北","重庆","江西","贵州","安徽","广西","陕西","天津","四川","湖北","甘肃","山西","新疆","海南","云南","吉林","青海","辽宁","内蒙古","宁夏","黑龙江","福建","内蒙古","内蒙古","湖南"],"kpi":{"total_cost":5208800.11,"total_members":53842,"total_gmv":60885479.04,"total_roi":11.69,"total_cac":96.74,"acq_cost":4714015.42,"acq_members":54001,"acq_cac":87.29},"full_members":[10232,9896,9188,10516,9774,9563,7313,7150,8120,9112,6099,6878,9961,7015,8319,9400,8215,5758,6396,12187,8959,8611,10501,9367,6957,7640,9218,7019,7382,8825,7719,6919,5944,7716,6417,8750,10252,8558]};
-const C = {prim:'#58a6ff',green:'#3fb950',red:'#f85149',yellow:'#d29922',purple:'#bc8cff',orange:'#d47616',bg:'#161b22',grid:'#30363d'};
+const C = {prim:'#58a6ff',green:'#3fb950',red:'#f85149',yellow:'#d29922',purple:'#bc8cff',orange:'#d47616',bg:'#192734',grid:'#38444d'};
 let curDim = 'province';
 
 function fmtDate(d) {return d.slice(0,4)+'-'+d.slice(4,6)+'-'+d.slice(6,8);}
