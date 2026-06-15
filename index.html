@@ -444,6 +444,7 @@ function updateWeekTable(idx, target) {
   // Natural week calculation: Mon-Sun
   // Find the latest complete week within the filtered date range
   const dates = idx.map(i => D.dates[i]);
+  const allDates = D.dates;
   if (dates.length === 0) return;
   
   // Get latest date
@@ -483,9 +484,9 @@ function updateWeekTable(idx, target) {
   // Sum data for current week and previous week
   function sumData(start, end, field) {
     let total = 0;
-    for (const d of dates) {
-      if (d >= start && d <= end) {
-        total += D[field][D.dates.indexOf(d)];
+    for (const dd of allDates) {
+      if (dd >= start && dd <= end) {
+        total += D[field][D.dates.indexOf(dd)];
       }
     }
     return total;
@@ -500,6 +501,11 @@ function updateWeekTable(idx, target) {
     if (target === 'acq') return sumData(start, end, 'acq_members');
     if (target === 'ret') return sumData(start, end, 'ret_members');
     return sumData(start, end, 'acq_members') + sumData(start, end, 'ret_members');
+  }
+  function sumGmv(start, end) {
+    if (target === 'acq') return sumData(start, end, 'org_gmv');
+    if (target === 'ret') return 0;
+    return sumData(start, end, 'org_gmv');
   }
   
   const thisCost = sumCost(thisStart, thisEnd);
@@ -539,9 +545,9 @@ function updateWeekTable(idx, target) {
   // 交易会员人数（WoW）- 需要包含拉新+老客
   function sumTradeMembers(start, end) {
     let total = 0;
-    for (const d of dates) {
-      if (d >= start && d <= end) {
-        const i = D.dates.indexOf(d);
+    for (const dd of allDates) {
+      if (dd >= start && dd <= end) {
+        const i = D.dates.indexOf(dd);
         total += (D.acq_trade_members[i]||0) + (D.ret_trade_members?.[i]||0);
       }
     }
@@ -556,6 +562,13 @@ function updateWeekTable(idx, target) {
   document.getElementById('w_cacc_c').textContent = fmtCac(thisCac);
   document.getElementById('w_cacc_p').textContent = fmtCac(prevCac);
   document.getElementById('w_cacc_w').innerHTML = fmtWoW(thisCac, prevCac);
+
+  const thisRoi = sumGmv(thisStart, thisEnd) / (thisCost || 1);
+  const prevRoi = sumGmv(prevStart, prevEnd) / (prevCost || 1);
+  function fmtRoi(v) { return v.toFixed(2); }
+  document.getElementById('w_roi_c').textContent = fmtRoi(thisRoi);
+  document.getElementById('w_roi_p').textContent = fmtRoi(prevRoi);
+  document.getElementById('w_roi_w').innerHTML = fmtWoW(thisRoi, prevRoi);
   
   document.getElementById('w_firstc_c').textContent = '-';
   document.getElementById('w_firstc_p').textContent = '-';
@@ -567,9 +580,9 @@ function updateWeekTable(idx, target) {
   // 广告订单人数 - 从数据中读取（拉新+老客）
   function sumOrderUsers(start, end) {
     let total = 0;
-    for (const d of dates) {
-      if (d >= start && d <= end) {
-        const i = D.dates.indexOf(d);
+    for (const dd of allDates) {
+      if (dd >= start && dd <= end) {
+        const i = D.dates.indexOf(dd);
         total += (D.acq_order_users[i] || 0) + (D.ret_order_users?.[i] || 0);
       }
     }
