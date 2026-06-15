@@ -163,7 +163,7 @@ function updateKPIs(idx, target) {
   if (target === 'acq') {
     cost = idx.reduce((s,i) => s + D.acq_cost[i], 0);
     members = idx.reduce((s,i) => s + D.acq_members[i], 0);
-    gmv = idx.reduce((s,i) => s + D.acq_gmv[i], 0);
+    gmv = idx.reduce((s,i) => s + D.acq_org_gmv[i], 0);
   } else if (target === 'ret') {
     cost = idx.reduce((s,i) => s + D.ret_cost[i], 0);
     members = idx.reduce((s,i) => s + D.ret_members[i], 0);
@@ -171,7 +171,7 @@ function updateKPIs(idx, target) {
   } else {
     cost = idx.reduce((s,i) => s + D.acq_cost[i] + D.ret_cost[i], 0);
     members = idx.reduce((s,i) => s + D.acq_members[i] + D.ret_members[i], 0);
-    gmv = idx.reduce((s,i) => s + D.acq_gmv[i], 0);
+    gmv = idx.reduce((s,i) => s + D.acq_org_gmv[i], 0);
   }
   const tradeMembers = idx.reduce((s,i) => s + (D.acq_trade_members[i]||0) + (D.ret_trade_members?.[i]||0), 0);
   const orderUsers = idx.reduce((s,i) => s + (D.acq_order_users[i] || 0) + (D.ret_order_users?.[i] || 0), 0);
