@@ -366,14 +366,14 @@ function drawCharts(idx,target,region){
 
   if(bubble.length>0){
     // Calculate national averages as quadrant center
-    const medianCost = bubble.reduce((s,d) => s + d.cost, 0) / bubble.length;
-    const medianMembers = bubble.reduce((s,d) => s + d.members, 0) / bubble.length;
+    const medianCost = bubble.reduce((s,d) => s + d.c, 0) / bubble.length;
+    const medianMembers = bubble.reduce((s,d) => s + d.m, 0) / bubble.length;
     
     // Assign quadrants
     function getQuadrant(d) {
-      if (d.cost >= medianCost && d.members >= medianMembers) return 'Q1';
-      if (d.cost < medianCost && d.members >= medianMembers) return 'Q2';
-      if (d.cost < medianCost && d.members < medianMembers) return 'Q3';
+      if (d.c >= medianCost && d.m >= medianMembers) return 'Q1';
+      if (d.c < medianCost && d.m >= medianMembers) return 'Q2';
+      if (d.c < medianCost && d.m < medianMembers) return 'Q3';
       return 'Q4';
     }
     
@@ -385,8 +385,8 @@ function drawCharts(idx,target,region){
       const pts = bubble.filter(d => getQuadrant(d) === q);
       if (pts.length === 0) continue;
       traces.push({
-        x: pts.map(d => d.cost),
-        y: pts.map(d => d.members),
+        x: pts.map(d => d.c),
+        y: pts.map(d => d.m),
         text: pts.map(d => d.name),
         customdata: pts.map(d => [d.roi, d.cac]),
         type: 'scatter', mode: 'markers+text',
@@ -402,8 +402,8 @@ function drawCharts(idx,target,region){
       });
     }
     
-    const xRange = [Math.min(...bubble.map(d => d.cost)) * 0.5, Math.max(...bubble.map(d => d.cost)) * 2];
-    const yRange = [Math.min(...bubble.map(d => d.members)) * 0.5, Math.max(...bubble.map(d => d.members)) * 2];
+    const xRange = [Math.min(...bubble.map(d => d.c)) * 0.5, Math.max(...bubble.map(d => d.c)) * 2];
+    const yRange = [Math.min(...bubble.map(d => d.m)) * 0.5, Math.max(...bubble.map(d => d.m)) * 2];
     
     Plotly.newPlot('c5', traces, {
       margin:{l:50,r:50,t:10,b:40},
