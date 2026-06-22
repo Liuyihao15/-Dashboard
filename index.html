@@ -123,6 +123,15 @@ body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;backgro
   </div>
 </div>
 
+|<div class="week-table" id="efficiencyNote" style="margin-bottom:16px;padding:10px 14px;">
+  <h3>📋 效率分层标准说明 <span style="font-weight:400;font-size:12px;color:#9ca3af">— 沿用区域效率四象限标准</span></h3>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:#e1e8ed;line-height:1.8">
+    <div><span style="color:#3fb950;font-weight:600">🟢 高效</span>：消耗 &lt; 均值 &amp; 新增 &gt; 均值（低消耗·高新增）</div>
+    <div><span style="color:#58a6ff;font-weight:600">🔵 中等</span>：消耗 &gt; 均值 &amp; 新增 &gt; 均值（高消耗·高新增）或 消耗 &lt; 均值 &amp; 新增 &lt; 均值（低消耗·低新增）</div>
+    <div><span style="color:#f85149;font-weight:600">🔴 低效</span>：消耗 &gt; 均值 &amp; 新增 &lt; 均值（高消耗·低新增）</div>
+  </div>
+</div>
+
 <div class="prov-list" id="provDetailContainer">
   <h3>📋 省份拉新效率明细 <span style="font-weight:400;font-size:12px;color:#9ca3af">— 按效率分层</span></h3>
   <div id="provDetailBody" style="overflow-x:auto"></div>
@@ -302,7 +311,7 @@ function drawCharts(idx,target,region){
   Plotly.newPlot('c1',[
     {x:plotDates,y:t1c,type:'scatter',mode:'lines+markers',name:'消耗(CA)',line:{color:C.prim,width:2},marker:{size:5},yaxis:'y',hovertemplate:'%{x|%Y-%m-%d}<br>消耗: ¥%{y:,.2f}<extra></extra>'},
     {x:plotDates,y:t1m,type:'scatter',mode:'lines+markers',name:'新增会员',line:{color:C.green,width:2},marker:{size:5},yaxis:'y2',hovertemplate:'%{x|%Y-%m-%d}<br>新增: %{y:,}人<extra></extra>'}
-  ],{margin:{l:60,r:60,t:10,b:50},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10,color:'#e1e8ed'},tickmode:'linear',dtick:3,tickformat:'%m/%d',type:'date',gridcolor:C.grid},yaxis:{title:'消耗(¥)',side:'left',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},yaxis2:{title:'新增会员',side:'right',overlaying:'y',showgrid:false,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},legend:{orientation:'h',y:1.08,font:{color:'#e1e8ed'}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
+  ],{margin:{l:60,r:60,t:10,b:50},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10,color:'#e1e8ed'},tickmode:'linear',dtick:3,tickformat:'%m/%d',type:'date',gridcolor:C.grid},yaxis:{title:'消耗(¥)',side:'left',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},yaxis2:{title:'新增会员',side:'right',overlaying:'y',showgrid:false,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},legend:{orientation:'h',y:1.08,font:{color:'#e1e8ed'}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false,hoverlabel:{bgcolor:'#192734',font:{color:'#f0f6fc',size:12}}});
 
   const avgC=Math.round(t1c.reduce((a,b)=>a+b,0)/t1c.length);
   const maxI=t1c.indexOf(Math.max(...t1c));
@@ -324,7 +333,7 @@ function drawCharts(idx,target,region){
   Plotly.newPlot('c2',[
     {x:plotDates,y:t2cac,type:'scatter',mode:'lines+markers',name:'CAC(注册成本)',line:{color:C.red,width:2},marker:{size:4},yaxis:'y',hovertemplate:'%{x|%Y-%m-%d}<br>CAC: ¥%{y:,.2f}<extra></extra>'},
     {x:plotDates,y:t2roi,type:'scatter',mode:'lines+markers',name:'ROI',line:{color:C.yellow,width:2},marker:{size:4},yaxis:'y2',hovertemplate:'%{x|%Y-%m-%d}<br>ROI: %{y:.2f}<extra></extra>'}
-  ],{margin:{l:50,r:50,t:10,b:50},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10,color:'#e1e8ed'},tickmode:'linear',dtick:3,tickformat:'%m/%d',type:'date',gridcolor:C.grid},yaxis:{title:'CAC(¥)',side:'left',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},yaxis2:{title:'ROI',side:'right',overlaying:'y',showgrid:false,rangemode:'tozero',titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},legend:{orientation:'h',y:1.08,font:{color:'#e1e8ed'}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
+  ],{margin:{l:50,r:50,t:10,b:50},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10,color:'#e1e8ed'},tickmode:'linear',dtick:3,tickformat:'%m/%d',type:'date',gridcolor:C.grid},yaxis:{title:'CAC(¥)',side:'left',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},yaxis2:{title:'ROI',side:'right',overlaying:'y',showgrid:false,rangemode:'tozero',titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},legend:{orientation:'h',y:1.08,font:{color:'#e1e8ed'}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false,hoverlabel:{bgcolor:'#192734',font:{color:'#f0f6fc',size:12}}});
 
   const aCac=t2cac.filter(v=>v<1000).reduce((a,b)=>a+b,0)/(t2cac.filter(v=>v<1000).length||1);
   const aRoi=t2roi.reduce((a,b)=>a+b,0)/(t2roi.length||1);
@@ -337,7 +346,7 @@ function drawCharts(idx,target,region){
   Plotly.newPlot('c6',[
     {x:plotDates,y:acqM,type:'bar',name:'拉新·注册会员',marker:{color:C.green,opacity:0.8},yaxis:'y',hovertemplate:'%{x|%Y-%m-%d}<br>拉新: %{y:,}人<extra></extra>'},
     {x:plotDates,y:retM,type:'bar',name:'交易会员·新增',marker:{color:C.prim,opacity:0.8},yaxis:'y',hovertemplate:'%{x|%Y-%m-%d}<br>交易会员: %{y:,}人<extra></extra>'}
-  ],{barmode:'stack',margin:{l:50,r:50,t:10,b:50},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10,color:'#e1e8ed'},tickmode:'linear',dtick:3,tickformat:'%m/%d',type:'date',gridcolor:C.grid},yaxis:{title:'新增会员',side:'left',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},legend:{orientation:'h',y:1.08,font:{color:'#e1e8ed'}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
+  ],{barmode:'stack',margin:{l:50,r:50,t:10,b:50},hovermode:'x unified',xaxis:{tickangle:-45,tickfont:{size:10,color:'#e1e8ed'},tickmode:'linear',dtick:3,tickformat:'%m/%d',type:'date',gridcolor:C.grid},yaxis:{title:'新增会员',side:'left',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},legend:{orientation:'h',y:1.08,font:{color:'#e1e8ed'}},paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false,hoverlabel:{bgcolor:'#192734',font:{color:'#f0f6fc',size:12}}});
 
   const aT=acqM.reduce((a,b)=>a+b,0),rT=retM.reduce((a,b)=>a+b,0);
   document.getElementById('insight6').textContent='💡 拉新 '+aT.toLocaleString()+'人 | 交易会员 '+rT.toLocaleString()+'人 | 拉新占比 '+(aT/(aT+rT||1)*100).toFixed(1)+'%';
@@ -356,7 +365,7 @@ function drawCharts(idx,target,region){
   ],{margin:{l:70,r:20,t:5,b:40},hovermode:'y unified',
     xaxis:{title:'消耗(¥)',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
     yaxis:{tickfont:{size:11,color:'#e1e8ed'},automargin:true},
-    paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
+    paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false,hoverlabel:{bgcolor:'#192734',font:{color:'#f0f6fc',size:12}}});
 
   document.getElementById('insight4').textContent='💡 TOP1: '+zipped[0].n+' (¥'+(zipped[0].c/10000).toFixed(1)+'万) | TOP3: ¥'+((zipped[0].c+zipped[1].c+zipped[2].c)/10000).toFixed(1)+'万';
 
@@ -437,7 +446,7 @@ function drawCharts(idx,target,region){
       ],
       hovermode:'closest',
       paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}
-    }, {responsive:true,displayModeBar:false});
+    }, {responsive:true,displayModeBar:false, hoverlabel:{bgcolor:'#192734',font:{color:'#f0f6fc',size:12}}});
     
     const q2Count = bubble.filter(d => getQuadrant(d) === 'Q2').length;
     const q4Count = bubble.filter(d => getQuadrant(d) === 'Q4').length;
@@ -456,7 +465,7 @@ function drawCharts(idx,target,region){
   ],{margin:{l:70,r:20,t:5,b:40},hovermode:'y unified',
     xaxis:{title:'GMV(¥)',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
     yaxis:{tickfont:{size:11,color:'#e1e8ed'},automargin:true},
-    paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
+    paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false,hoverlabel:{bgcolor:'#192734',font:{color:'#f0f6fc',size:12}}});
 
   document.getElementById('insight3').textContent='💡 TOP1 GMV: '+gmvSorted[0].n+' (¥'+(gmvSorted[0].gmv/10000).toFixed(1)+'万) | TOP3: ¥'+((gmvSorted[0].gmv+gmvSorted[1].gmv+gmvSorted[2].gmv)/10000).toFixed(1)+'万';
 }
