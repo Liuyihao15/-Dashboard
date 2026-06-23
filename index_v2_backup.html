@@ -124,6 +124,15 @@ body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;backgro
 </div>
 
 <div class="prov-list" id="provDetailContainer">
+  <div class="week-table" style="margin-bottom:12px;padding:10px 14px;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6">
+      <strong style="color:#e1e8ed;">效率分层标准</strong>：
+      🟢 高效 = 低消耗·高新增（消耗&lt;全国均值，注册会员≥全国均值）&nbsp;|&nbsp;
+      🔵 中等 = 高消耗·高新增（双高）&nbsp;|&nbsp;
+      ⚪ 待优化 = 低消耗·低新增（双低）&nbsp;|&nbsp;
+      🔴 预警 = 高消耗·低新增（消耗≥全国均值，注册会员&lt;全国均值）
+    </p>
+  </div>
   <h3>📋 省份拉新效率明细 <span style="font-weight:400;font-size:12px;color:#9ca3af">— 按效率分层</span></h3>
   <div id="provDetailBody" style="overflow-x:auto"></div>
 </div>
@@ -360,53 +369,78 @@ function drawCharts(idx,target,region){
 
   document.getElementById('insight4').textContent='💡 TOP1: '+zipped[0].n+' (¥'+(zipped[0].c/10000).toFixed(1)+'万) | TOP3: ¥'+((zipped[0].c+zipped[1].c+zipped[2].c)/10000).toFixed(1)+'万';
 
-  // Chart 5: 气泡图 - 区域效率四象限
+  // Chart 5: 区域效率四象限（四色独立trace）
   const bubble=provNames.map((n,i)=>({n,c:provCosts[i],m:provMems[i],roi:D.prov_roi[i],cac:D.prov_cac[i]})).filter(d=>d.c>1000&&d.m>0);
 
-  // 计算全国均值
-  const totalCost = bubble.reduce((s,d)=>s+d.c,0);
-  const totalMem = bubble.reduce((s,d)=>s+d.m,0);
-  const avgCost = totalCost/(bubble.length||1);
-  const avgMem = totalMem/(bubble.length||1);
-  const avgRoi = bubble.reduce((s,d)=>s+d.roi,0)/(bubble.length||1);
-  const avgCac = bubble.reduce((s,d)=>s+d.cac,0)/(bubble.length||1);
-
   if(bubble.length>0){
-    Plotly.newPlot('c5',[
-      // 省份气泡层（允许悬浮）
-      {
-        x:bubble.map(d=>d.c),y:bubble.map(d=>d.m),text:bubble.map(d=>d.n),
-        type:'scatter',mode:'markers+text',
-        marker:{size:bubble.map(d=>Math.max(12,Math.min(80,d.roi*5))),
-                color:bubble.map(d=>d.cac),colorscale:'RdYlGn_r',showscale:true,
-                colorbar:{title:'CAC(¥)',len:0.6,thickness:10,tickfont:{color:'#e1e8ed'},titlefont:{color:'#e1e8ed'}},
-                line:{color:'white',width:1}},
-        textposition:'top center',textfont:{size:10,color:'#e1e8ed'},
-        hovertemplate:'%{text}<br>消耗: ¥%{x:,.2f}<br>新增: %{y:,}<br>ROI: %{marker.size/5:.1f}<br>CAC: ¥%{marker.color:.1f}<extra></extra>'
-      },
-      // 全国均值参考线（垂直线+水平线）+ 均值标记点
-      {
-        x:[avgCost,avgCost,Math.min(...bubble.map(d=>d.c))*0.5],y:[avgMem,Math.min(...bubble.map(d=>d.m))*0.5,avgMem],
-        type:'scatter',mode:'lines',
-        line:{color:'rgba(255,255,255,0.25)',dash:'dash',width:1},
-        hoverinfo:'skip',showlegend:false,name:''
-      },
-      // 全国均值标记点（大星标，hover悬浮在最后层不遮挡省份）
-      {
-        x:[avgCost],y:[avgMem],text:['全国均值'],
-        type:'scatter',mode:'markers+text',
-        marker:{size:22,symbol:'star',color:'#d29922',line:{color:'white',width:2}},
-        textposition:'top center',textfont:{size:12,color:'#f0f6fc',weight:'bold'},
-        hoverinfo:'skip',
-        name:'全国均值'
-      }
-    ],{margin:{l:50,r:50,t:10,b:40},hovermode:'closest',
-      xaxis:{title:'消耗(¥)',type:'log',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
-      yaxis:{title:'新增会员',showgrid:true,gridcolor:C.grid,rangemode:'tozero',titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
-      paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
+    // 全国均值（作为象限原点）
+    const medianCost = bubble.reduce((s,d)=>s+d.c,0)/bubble.length;
+    const medianMem = bubble.reduce((s,d)=>s+d.m,0)/bubble.length;
 
+    function getQuadrant(d){
+      if(d.c>=medianCost&&d.m>=medianMem)return'Q1'; // 高消耗高新增
+      if(d.c<medianCost&&d.m>=medianMem)return'Q2'; // 低消耗高新增=高效
+      if(d.c<medianCost&&d.m<medianMem)return'Q3'; // 低消耗低新增
+      return'Q4'; // 高消耗低新增=低效
+    }
+    const qColors={Q1:C.prim,Q2:C.green,Q3:'#8b949e',Q4:C.red};
+    const qLabels={Q1:'高消耗·高新增',Q2:'低消耗·高新增▲高效',Q3:'低消耗·低新增',Q4:'高消耗·低新增▼低效'};
+
+    const traces=[];
+    ['Q1','Q2','Q3','Q4'].forEach(q=>{
+      const pts=bubble.filter(d=>getQuadrant(d)===q);
+      if(pts.length===0)return;
+      traces.push({
+        x:pts.map(d=>d.c),y:pts.map(d=>d.m),text:pts.map(d=>d.n),
+        type:'scatter',mode:'markers+text',
+        marker:{size:pts.map(d=>Math.max(14,Math.min(80,d.roi*5))),
+                color:qColors[q],line:{color:'white',width:1}},
+        textposition:'top center',textfont:{size:9,color:'#e1e8ed'},
+        hovertemplate:'%{text}<br>消耗: ¥%{x:,.1f}<br>新增: %{y:,}<br>ROI: %{customdata[0]:.2f}<br>CAC: ¥%{customdata[1]:.1f}<extra></extra>',
+        customdata:pts.map(d=>[d.roi,d.cac]),
+        name:qLabels[q],legendgroup:q
+      });
+    });
+
+    // 全国均值虚线
+    const xMin=bubble.reduce((a,d)=>Math.min(a,d.c),Infinity)*0.5;
+    const xMax=bubble.reduce((a,d)=>Math.max(a,d.c),0)*2;
+    const yMin=bubble.reduce((a,d)=>Math.min(a,d.m),Infinity)*0.5;
+    const yMax=bubble.reduce((a,d)=>Math.max(a,d.m),0)*2;
+    traces.push({
+      x:[medianCost,medianCost],y:[yMin,yMax],
+      type:'scatter',mode:'lines',
+      line:{color:'rgba(255,255,255,0.3)',dash:'dash',width:1},
+      hoverinfo:'skip',showlegend:false
+    });
+    traces.push({
+      x:[xMin,xMax],y:[medianMem,medianMem],
+      type:'scatter',mode:'lines',
+      line:{color:'rgba(255,255,255,0.3)',dash:'dash',width:1},
+      hoverinfo:'skip',showlegend:false
+    });
+    // 全国均值星标
+    traces.push({
+      x:[medianCost],y:[medianMem],text:['全国均值'],
+      type:'scatter',mode:'markers+text',
+      marker:{size:22,symbol:'star',color:'#d29922',line:{color:'white',width:2}},
+      textposition:'top center',textfont:{size:11,color:'#f0f6fc',weight:'bold'},
+      hoverinfo:'skip',name:'全国均值'
+    });
+
+    Plotly.newPlot('c5',traces,{
+      margin:{l:50,r:50,t:10,b:40},hovermode:'closest',
+      xaxis:{title:'消耗(¥)',type:'log',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
+      yaxis:{title:'新会员注册数',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
+      legend:{orientation:'h',y:1.08,font:{size:10,color:'#e1e8ed'}},
+      paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}
+    },{responsive:true,displayModeBar:false});
+
+    const q2Count=bubble.filter(d=>getQuadrant(d)==='Q2').length;
+    const q4Count=bubble.filter(d=>getQuadrant(d)==='Q4').length;
     const best=bubble.reduce((a,b)=>a.roi>b.roi?a:b);
-    document.getElementById('insight5').textContent='💡 气泡大小=ROI | 越绿CAC越低 | 最佳: '+best.n+' (ROI '+best.roi+', CAC ¥'+best.cac+')';
+    document.getElementById('insight5').textContent=
+      '💡 虚线=全国均值(消耗¥'+(medianCost/10000).toFixed(1)+'万, 新增'+(medianMem).toFixed(0)+'人) | Q2高效区'+q2Count+'省 | Q4低效区'+q4Count+'省 | 最佳: '+best.n+' (ROI '+best.roi.toFixed(2)+', CAC ¥'+best.cac.toFixed(2)+')';
   }
 
   // Chart 3: 省份效率排行 (GMV/会员)
@@ -430,21 +464,22 @@ function renderProvDetail(idx,target){
   let provs=region==='all'?D.provinces:D.provinces.filter(p=>p===region);
   if(provs.length===0)provs=D.provinces;
 
-  // Build province detail data
   const detail=provs.map(p=>{
     const pi=D.provinces.indexOf(p);
     const cost=D.prov_cost[pi],mem=D.prov_members[pi],gmv=D.prov_gmv[pi];
-    const cac=cost/(mem||1),roi=gmv/(cost||1);
+    const cac=cost/(mem||1),roi=(D.prov_org_gmv?.[pi]||gmv)/(cost||1);
     const gmvPerMem=gmv/(mem||1);
     return{name:p,cost,mem,gmv,cac,roi,gmvPerMem};
   }).sort((a,b)=>b.mem-a.mem);
 
-  // Tier classification
-  const avgCac=detail.reduce((s,d)=>s+d.cac,0)/(detail.length||1);
+  // 四象限效率分层（以全国均值为界）
+  const avgCost=detail.reduce((s,d)=>s+d.cost,0)/(detail.length||1);
+  const avgMem=detail.reduce((s,d)=>s+d.mem,0)/(detail.length||1);
+
   detail.forEach(d=>{
-    if(d.roi>=2&&d.cac<=avgCac) d.tier='high';
-    else if(d.roi>=1) d.tier='mid';
-    else if(d.roi>=0.5) d.tier='low';
+    if(d.cost<avgCost&&d.mem>=avgMem) d.tier='high';
+    else if(d.cost>=avgCost&&d.mem>=avgMem) d.tier='mid';
+    else if(d.cost<avgCost&&d.mem<avgMem) d.tier='low';
     else d.tier='warn';
   });
 
