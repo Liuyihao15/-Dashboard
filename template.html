@@ -381,44 +381,9 @@ function drawCharts(idx,target,region){
   const avgCac = bubble.reduce((s,d)=>s+d.cac,0)/(bubble.length||1);
 
   if(bubble.length>0){
-<<<<<<< Updated upstream
     // 全国均值（作为象限原点）
     const medianCost = bubble.reduce((s,d)=>s+d.c,0)/bubble.length;
     const medianMem = bubble.reduce((s,d)=>s+d.m,0)/bubble.length;
-=======
-    Plotly.newPlot('c5',[
-      // 省份气泡层（允许悬浮）
-      {
-        x:bubble.map(d=>d.c),y:bubble.map(d=>d.m),text:bubble.map(d=>d.n),
-        type:'scatter',mode:'markers+text',
-        marker:{size:bubble.map(d=>Math.max(12,Math.min(80,d.roi*5))),
-                color:bubble.map(d=>d.cac),colorscale:'RdYlGn_r',showscale:true,
-                colorbar:{title:'CAC(¥)',len:0.6,thickness:10,tickfont:{color:'#e1e8ed'},titlefont:{color:'#e1e8ed'}},
-                line:{color:'white',width:1}},
-        textposition:'top center',textfont:{size:10,color:'#e1e8ed'},
-        hovertemplate:'%{text}<br>消耗: ¥%{x:,.2f}<br>新增: %{y:,}<br>ROI: %{marker.size/5:.1f}<br>CAC: ¥%{marker.color:.1f}<extra></extra>'
-      },
-      // 全国均值参考线（垂直线+水平线）+ 均值标记点
-      {
-        x:[avgCost,avgCost,Math.min(...bubble.map(d=>d.c))*0.5],y:[avgMem,Math.min(...bubble.map(d=>d.m))*0.5,avgMem],
-        type:'scatter',mode:'lines',
-        line:{color:'rgba(255,255,255,0.25)',dash:'dash',width:1},
-        hoverinfo:'skip',showlegend:false,name:''
-      },
-      // 全国均值标记点（大星标，hover悬浮在最后层不遮挡省份）
-      {
-        x:[avgCost],y:[avgMem],text:['全国均值'],
-        type:'scatter',mode:'markers+text',
-        marker:{size:22,symbol:'star',color:'#d29922',line:{color:'white',width:2}},
-        textposition:'top center',textfont:{size:12,color:'#f0f6fc',weight:'bold'},
-        hoverinfo:'skip',
-        name:'全国均值'
-      }
-    ],{margin:{l:50,r:50,t:10,b:40},hovermode:'closest',
-      xaxis:{title:'消耗(¥)',type:'log',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
-      yaxis:{title:'新增会员',showgrid:true,gridcolor:C.grid,rangemode:'tozero',titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
-      paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
->>>>>>> Stashed changes
 
     function getQuadrant(d){
       if(d.c>=medianCost&&d.m>=medianMem)return'Q1'; // 高消耗高新增
