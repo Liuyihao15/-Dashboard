@@ -393,7 +393,7 @@ function drawCharts(idx,target,region){
       traces.push({
         x:pts.map(d=>d.c),y:pts.map(d=>d.m),text:pts.map(d=>d.n),
         type:'scatter',mode:'markers+text',
-        marker:{size:pts.map(d=>Math.max(14,Math.min(80,d.roi*5))),
+        marker:{size:pts.map(d=>Math.max(16,Math.min(80,Math.sqrt(d.m/20)*15))),
                 color:qColors[q],line:{color:'white',width:1}},
         textposition:'top center',textfont:{size:9,color:'#e1e8ed'},
         hovertemplate:'%{text}<br>消耗: ¥%{x:,.1f}<br>新增: %{y:,}<br>ROI: %{customdata[0]:.2f}<br>CAC: ¥%{customdata[1]:.1f}<extra></extra>',

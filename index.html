@@ -351,23 +351,23 @@ function drawCharts(idx,target,region){
   const aT=acqM.reduce((a,b)=>a+b,0),rT=retM.reduce((a,b)=>a+b,0);
   document.getElementById('insight6').textContent='💡 拉新 '+aT.toLocaleString()+'人 | 交易会员 '+rT.toLocaleString()+'人 | 拉新占比 '+(aT/(aT+rT||1)*100).toFixed(1)+'%';
 
-  // Chart 4: 拉新贡献排行 (TOP 15 provinces)
+  // Chart 4: 拉新贡献排行 (按注册会员数)
   const provNames=region==='all'?D.provinces:D.provinces.filter(p=>p===region);
   const provCosts=provNames.map((p,i)=>D.prov_cost[D.provinces.indexOf(p)]);
   const provMems=provNames.map((p,i)=>D.prov_members[D.provinces.indexOf(p)]);
-  const zipped=provNames.map((n,i)=>({n,c:provCosts[i],m:provMems[i]})).sort((a,b)=>b.c-a.c);
+  const zipped=provNames.map((n,i)=>({n,c:provCosts[i],m:provMems[i]})).sort((a,b)=>b.m-b.a);
   const top15=zipped.slice(0,15).reverse();
 
   Plotly.newPlot('c4',[
-    {x:top15.map(d=>d.c),y:top15.map(d=>d.n),type:'bar',orientation:'h',
+    {x:top15.map(d=>d.m),y:top15.map(d=>d.n),type:'bar',orientation:'h',
       marker:{color:top15.map((d,i)=>i<Math.floor(top15.length/2)?C.prim:'#58a6ff'),opacity:0.85},
-      hovertemplate:'%{y}<br>消耗: ¥%{x:,.2f}<extra></extra>'}
+      hovertemplate:'%{y}<br>注册会员: %{x:,}人<extra></extra>'}
   ],{margin:{l:70,r:20,t:5,b:40},hovermode:'y unified',
-    xaxis:{title:'消耗(¥)',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
+    xaxis:{title:'注册会员(人)',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
     yaxis:{tickfont:{size:11,color:'#e1e8ed'},automargin:true},
     paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}},{responsive:true,displayModeBar:false});
 
-  document.getElementById('insight4').textContent='💡 TOP1: '+zipped[0].n+' (¥'+(zipped[0].c/10000).toFixed(1)+'万) | TOP3: ¥'+((zipped[0].c+zipped[1].c+zipped[2].c)/10000).toFixed(1)+'万';
+  document.getElementById('insight4').textContent='💡 TOP1: '+zipped[0].n+' ('+zipped[0].m.toLocaleString()+'人) | TOP3: '+(zipped[0].m+zipped[1].m+zipped[2].m).toLocaleString()+'人';
 
   // Chart 5: 区域效率四象限（四色独立trace）
   const bubble=provNames.map((n,i)=>({n,c:provCosts[i],m:provMems[i],roi:D.prov_roi[i],cac:D.prov_cac[i]})).filter(d=>d.c>1000&&d.m>0);
