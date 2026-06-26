@@ -437,10 +437,16 @@ function drawCharts(idx,target,region){
     });
 
     Plotly.newPlot('c5',traces,{
-      margin:{l:50,r:50,t:10,b:40},hovermode:'closest',
+      margin:{l:50,r:130,t:10,b:40},hovermode:'closest',
       xaxis:{title:'消耗(¥)',type:'log',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
       yaxis:{title:'新会员注册数',showgrid:true,gridcolor:C.grid,titlefont:{color:'#e1e8ed'},tickfont:{color:'#e1e8ed'}},
-      legend:{orientation:'h',y:1.08,font:{size:10,color:'#e1e8ed'}},
+      legend:{orientation:'v',x:1.02,y:1,font:{size:9,color:'#e1e8ed'},bgcolor:'rgba(25,39,52,0.8)'},
+      annotations:[
+        {x:medianCost*2.5,y:medianMem*1.8,showarrow:false,text:'🔵 高消耗·高新增',font:{size:10,color:'#58a6ff'},xref:'x',yref:'y'},
+        {x:medianCost*0.15,y:medianMem*1.8,showarrow:false,text:'🟢 高效区',font:{size:10,color:'#3fb950'},xref:'x',yref:'y'},
+        {x:medianCost*0.15,y:medianMem*0.25,showarrow:false,text:'⚪ 待提升',font:{size:10,color:'#8b949e'},xref:'x',yref:'y'},
+        {x:medianCost*2.5,y:medianMem*0.25,showarrow:false,text:'🔴 低效区⚠️',font:{size:10,color:'#f85149'},xref:'x',yref:'y'}
+      ],
       paper_bgcolor:'transparent',plot_bgcolor:'transparent',font:{color:'#e1e8ed'}
     },{responsive:true,displayModeBar:false});
 
