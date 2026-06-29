@@ -111,8 +111,9 @@ def parse_xlsx(xlsx_path):
     strings = [si.find('.//s:t', ns).text if si.find('.//s:t', ns) is not None else '' 
                for si in st.findall('.//s:si', ns)]
     
-    sheet1 = z.read('xl/worksheets/sheet1.xml')
-    root = ET.fromstring(sheet1)
+    # 数据在 sheet2（广告会员数据），sheet1 是概要
+    sheet2 = z.read('xl/worksheets/sheet2.xml')
+    root = ET.fromstring(sheet2)
     rows = root.findall('.//s:row', ns)
     
     daily = {}
