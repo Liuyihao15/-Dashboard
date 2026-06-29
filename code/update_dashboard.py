@@ -3,7 +3,11 @@
 品牌会员 Dashboard 数据更新流程（标准化版）
 ============================================
 用法:
-  python3 /Users/edy/Desktop/霸王茶姬看板/code/update_dashboard.py /path/to/新品牌会员数据.xlsx
+  python3 /Users/edy/Desktop/霸王茶姬看板/code/update_dashboard.py /path/to/广告会员数据.xlsx
+
+该脚本适用于 **广告会员数据格式**（A-Z 26列，商家粒度）：
+  列: 品牌(A) | 目标类型(B) | 日(C) | 计划ID(D) | 商家ID(E) | 省份(F) | 城市(G) | ...
+      J=消耗 | K=注册会员 | N=交易会员人数 | W=广告订单人数 | X=原价交易额
 
 流程:
   1. 解析新xlsx → 提取每日+省份+城市维度数据
@@ -11,8 +15,6 @@
   3. 合并新数据（追加日期、累加省份）
   4. 调用 _build.sh 重建index.html
   5. 推送GitHub Pages
-
-只需一步命令，不需要手动介入。
 """
 
 import zipfile, xml.etree.ElementTree as ET, json, sys, os, subprocess
@@ -21,6 +23,23 @@ import zipfile, xml.etree.ElementTree as ET, json, sys, os, subprocess
 DASHBOARD_DIR = '/Users/edy/Desktop/霸王茶姬看板'
 DASHBOARD_DATA = os.path.join(DASHBOARD_DIR, 'dashboard_data.json')
 BUILD_SCRIPT = os.path.join(DASHBOARD_DIR, '_build.sh')
+
+# ===== 新格式列映射 (0-based) =====
+# A(0)=品牌 B(1)=目标类型 C(2)=日 D(3)=KA广告投放计划id E(4)=商家ID 
+# F(5)=省份 G(6)=城市 H(7)=投放计划名称 I(8)=KA账号id
+# J(9)=广告消耗 K(10)=注册会员 L(11)=注册成本 M(12)=广告ROI
+# N(13)=交易会员人数 O(14)=点击 P(15)=曝光 Q(16)=注册率
+# R(17)=CVR S(18)=订单数 T(19)=CPM U(20)=CPC V(21)=CTR
+# W(22)=广告订单人数 X(23)=原价交易额 Y(24)=实付交易额 Z(25)=原价金额
+COL_TARGET = 1    # B
+COL_DATE = 2      # C
+COL_PROVINCE = 5  # F
+COL_CITY = 6      # G
+COL_COST = 9      # J
+COL_MEMBERS = 10  # K
+COL_TRADE = 13    # N
+COL_ORDER_USERS = 22  # W
+COL_ORG_GMV = 23  # X
 
 # ===== CITY → PROVINCE MAP =====
 CITY_TO_PROVINCE = {
@@ -64,7 +83,7 @@ CITY_TO_PROVINCE = {
     '长春':'吉林','吉林':'吉林','延边':'吉林','四平':'吉林','松原':'吉林','通化':'吉林',
     '沈阳':'辽宁','大连':'辽宁','鞍山':'辽宁','锦州':'辽宁','抚顺':'辽宁','营口':'辽宁','丹东':'辽宁',
     '盘锦':'辽宁','朝阳':'辽宁','辽阳':'辽宁','本溪':'辽宁','阜新':'辽宁','葫芦岛':'辽宁','铁岭':'辽宁',
-    '兰州':'甘肃','天水':'甘肃','庆阳':'甘肃','酒泉':'甘肃','武威':'甘肃','张掖':'甘肃','定西':'甘肃',
+    '兰州':'甘肃','天水':'甘肃','庆阳':'甘肃','酒泉':'甘肃','武威':'甘肃','定西':'甘肃',
     '贵阳':'贵州','遵义':'贵州','黔东南':'贵州','黔南':'贵州','六盘水':'贵州',
     '呼和浩特':'内蒙古','包头':'内蒙古','鄂尔多斯':'内蒙古','赤峰':'内蒙古','通辽':'内蒙古',
     '海口':'海南','三亚':'海南','儋州':'海南',
@@ -92,18 +111,21 @@ def resolve_province(city_name):
     return None
 
 def safe_float(v):
-    if v is None or str(v).strip().upper() in ('NULL','NONE',''):
+    if v is None or str(v).strip().upper() in ('NULL','NONE','','NAN','INF','-INF'):
         return 0.0
-    return float(v)
-
-def col_letter_to_index(col_str):
-    col = 0
-    for c in col_str:
-        col = col * 26 + (ord(c) - ord('A') + 1)
-    return col - 1
+    try:
+        return float(v)
+    except (ValueError, TypeError):
+        return 0.0
 
 def parse_xlsx(xlsx_path):
-    """Parse xlsx and return dict of daily + province data."""
+    """
+    解析广告会员数据格式的xlsx（Sheet2）。
+    列映射（新格式，A-Z 26列）：
+      B(1)=目标类型  C(2)=日期  F/G(5/6)=省份/城市
+      J(9)=消耗  K(10)=注册会员  N(13)=交易会员人数
+      W(22)=广告订单人数  X(23)=原价交易额
+    """
     z = zipfile.ZipFile(xlsx_path)
     xl_shared = z.read('xl/sharedStrings.xml')
     st = ET.fromstring(xl_shared)
@@ -111,7 +133,7 @@ def parse_xlsx(xlsx_path):
     strings = [si.find('.//s:t', ns).text if si.find('.//s:t', ns) is not None else '' 
                for si in st.findall('.//s:si', ns)]
     
-    # 数据在 sheet2（广告会员数据），sheet1 是概要
+    # 读 Sheet2（广告会员数据）
     sheet2 = z.read('xl/worksheets/sheet2.xml')
     root = ET.fromstring(sheet2)
     rows = root.findall('.//s:row', ns)
@@ -126,7 +148,7 @@ def parse_xlsx(xlsx_path):
         for c in r.findall('s:c', ns):
             col_str = c.get('r')
             col_letter = ''.join([ch for ch in col_str if not ch.isdigit()])
-            ci = col_letter_to_index(col_letter)
+            ci = ord(col_letter) - 65  # A=0, B=1, ...
             typ = c.get('t', '')
             v = c.find('s:v', ns)
             if v is not None:
@@ -135,61 +157,63 @@ def parse_xlsx(xlsx_path):
                 else:
                     vals[ci] = v.text
         
-        target_type = str(vals.get(1, ''))
-        city = (vals.get(6, '') or vals.get(5, '') or '').strip()
-        province = resolve_province(city)
-        date_str = vals.get(2, '').strip()
+        target_type = str(vals.get(COL_TARGET, ''))
+        date_str = vals.get(COL_DATE, '').strip()
+        province = vals.get(COL_PROVINCE, '').strip()
+        city = vals.get(COL_CITY, '').strip()
         
         if not date_str:
             continue
         all_dates.add(date_str)
         
-        cost = safe_float(vals.get(9))
-        members = safe_float(vals.get(10))
-        trade_members = safe_float(vals.get(12))
-        order_users = safe_float(vals.get(22))
-        org_gmv = safe_float(vals.get(23))
-        gmv = safe_float(vals.get(24))
+        cost = safe_float(vals.get(COL_COST))
+        members = safe_float(vals.get(COL_MEMBERS))
+        trade_members = safe_float(vals.get(COL_TRADE))
+        order_users = safe_float(vals.get(COL_ORDER_USERS))
+        org_gmv = safe_float(vals.get(COL_ORG_GMV))
         
         is_acq = '新会员' in target_type
+        
+        # Fallback: resolve province from city
+        if not province or province in ('0', ''):
+            province = resolve_province(city) or ''
         
         # Daily aggregation
         if date_str not in daily:
             daily[date_str] = {
-                'acq_cost':0,'acq_members':0,'acq_gmv':0,'acq_trade_members':0,'acq_order_users':0,
-                'ret_cost':0,'ret_members':0,'ret_order_users':0,
+                'acq_cost':0,'acq_members':0,'acq_trade_members':0,'acq_order_users':0,
+                'ret_cost':0,'ret_members':0,'ret_trade_members':0,'ret_order_users':0,
                 'org_gmv':0
             }
         daily[date_str]['org_gmv'] += org_gmv
         if is_acq:
             daily[date_str]['acq_cost'] += cost
             daily[date_str]['acq_members'] += members
-            daily[date_str]['acq_gmv'] += gmv
             daily[date_str]['acq_trade_members'] += trade_members
             daily[date_str]['acq_order_users'] += order_users
         else:
             daily[date_str]['ret_cost'] += cost
             daily[date_str]['ret_members'] += members
+            daily[date_str]['ret_trade_members'] += trade_members
             daily[date_str]['ret_order_users'] += order_users
         
         # Province aggregation
         if province:
             if province not in prov_stats:
-                prov_stats[province] = {'cost':0,'members':0,'gmv':0,'order_users':0,'trade_members':0,'org_gmv':0}
+                prov_stats[province] = {'cost':0,'members':0,'org_gmv':0,'order_users':0,'trade_members':0}
             prov_stats[province]['cost'] += cost
             prov_stats[province]['members'] += members
-            prov_stats[province]['gmv'] += gmv
+            prov_stats[province]['org_gmv'] += org_gmv
             prov_stats[province]['order_users'] += order_users
             prov_stats[province]['trade_members'] += trade_members
-            prov_stats[province]['org_gmv'] += org_gmv
         
         # City aggregation
         if city:
             if city not in city_stats:
-                city_stats[city] = {'cost':0,'members':0,'gmv':0}
+                city_stats[city] = {'cost':0,'members':0,'org_gmv':0}
             city_stats[city]['cost'] += cost
             city_stats[city]['members'] += members
-            city_stats[city]['gmv'] += gmv
+            city_stats[city]['org_gmv'] += org_gmv
     
     return {
         'daily': daily,
@@ -200,7 +224,7 @@ def parse_xlsx(xlsx_path):
 
 
 def merge_data(existing, new_parsed):
-    """Merge new parsed data into existing dashboard_data.json."""
+    """合并新数据到现有JSON"""
     new_dates = [d for d in new_parsed['dates'] if d not in existing['dates']]
     
     if not new_dates:
@@ -210,41 +234,38 @@ def merge_data(existing, new_parsed):
     print(f'📅 New dates to append: {new_dates}')
     merged = dict(existing)
     
-    # === Extend daily time series ===
+    # === Daily time series ===
     daily_fields = [
-        ('acq_cost',0), ('acq_members',0), ('acq_gmv',0),
-        ('acq_order_users',0), ('acq_trade_members',0),
-        ('ret_cost',0), ('ret_members',0), ('ret_order_users',0),
-        ('org_gmv',0)
+        ('acq_cost', 0), ('acq_members', 0), ('acq_trade_members', 0), ('acq_order_users', 0),
+        ('ret_cost', 0), ('ret_members', 0), ('ret_trade_members', 0), ('ret_order_users', 0),
+        ('org_gmv', 0),
     ]
-    
     for field, default in daily_fields:
         if field not in merged:
             merged[field] = [default] * len(merged['dates'])
+        # If existing array is shorter than dates, pad it
+        while len(merged[field]) < len(merged['dates']):
+            merged[field].append(default)
         for d in new_dates:
-            val = new_parsed['daily'].get(d, {}).get(field, default)
-            merged[field].append(val)
+            merged[field].append(new_parsed['daily'].get(d, {}).get(field, default))
     
-    # Append dates
     merged['dates'] = merged['dates'] + new_dates
     
-    # === Full members ===
+    # === Full members (from Sheet1 if available) ===
     if 'full_members' in merged:
         merged['full_members'] += [0] * len(new_dates)
     
-    # === Province data: merge (add new to existing) ===
+    # === Province data ===
     all_provs = list(merged['provinces'])
     for p in new_parsed['prov_stats']:
         if p not in all_provs:
             all_provs.append(p)
     
-    prov_fields = ['prov_cost','prov_members','prov_gmv','prov_order_users',
-                   'prov_trade_members','prov_org_gmv']
+    prov_fields = ['prov_cost','prov_members','prov_org_gmv','prov_order_users','prov_trade_members']
     for f in prov_fields:
         if f not in merged:
             merged[f] = [0] * len(all_provs)
     
-    # Rebuild province arrays
     prov_data = {}
     for i, p in enumerate(merged['provinces']):
         prov_data[p] = {f: merged[f][i] for f in prov_fields}
@@ -253,12 +274,10 @@ def merge_data(existing, new_parsed):
             prov_data[p] = {f: 0 for f in prov_fields}
         prov_data[p]['prov_cost'] += stats['cost']
         prov_data[p]['prov_members'] += stats['members']
-        prov_data[p]['prov_gmv'] += stats['gmv']
+        prov_data[p]['prov_org_gmv'] += stats['org_gmv']
         prov_data[p]['prov_order_users'] += stats['order_users']
         prov_data[p]['prov_trade_members'] += stats['trade_members']
-        prov_data[p]['prov_org_gmv'] += stats['org_gmv']
     
-    # Sort provinces by cost descending
     prov_sorted = sorted(prov_data.keys(), key=lambda p: prov_data[p]['prov_cost'], reverse=True)
     merged['provinces'] = prov_sorted
     for f in prov_fields:
@@ -290,7 +309,7 @@ def merge_data(existing, new_parsed):
     for c, stats in new_parsed['city_stats'].items():
         city_cost[c] += stats['cost']
         city_members[c] += stats['members']
-        city_gmv[c] += stats['gmv']
+        city_gmv[c] += stats['org_gmv']
     
     city_sorted = sorted(all_cities, key=lambda c: city_cost[c], reverse=True)
     merged['cities'] = city_sorted
@@ -300,7 +319,6 @@ def merge_data(existing, new_parsed):
     merged['city_roi'] = [round(city_gmv[c]/city_cost[c], 2) if city_cost[c]>0 else 0 for c in city_sorted]
     merged['city_cac'] = [round(city_cost[c]/city_members[c], 2) if city_members[c]>0 else 0 for c in city_sorted]
     
-    # City province mapping
     existing_city_prov = dict(zip(merged.get('cities',[]), merged.get('city_prov',[])))
     for c in city_sorted:
         if c not in existing_city_prov and c in new_parsed['city_stats']:
@@ -312,7 +330,7 @@ def merge_data(existing, new_parsed):
 
 def main():
     if len(sys.argv) < 2:
-        print('用法: python3 update_dashboard.py /path/to/新xlsx文件.xlsx')
+        print('用法: python3 update_dashboard.py /path/to/广告会员数据.xlsx')
         sys.exit(1)
     
     xlsx_path = sys.argv[1]
@@ -332,37 +350,44 @@ def main():
     
     merged = merge_data(existing, new_parsed)
     
-    total_cost = sum(merged.get('acq_cost', [100]))
+    total_trade = sum(merged.get('acq_trade_members', [0])) + sum(merged.get('ret_trade_members', [0]))
+    
     with open(DASHBOARD_DATA, 'w', encoding='utf-8') as f:
         json.dump(merged, f, ensure_ascii=False, separators=(',',':'))
     
     print(f'\n✅ dashboard_data.json 已更新')
     print(f'   日期: {merged["dates"][0]}~{merged["dates"][-1]} ({len(merged["dates"])}天)')
-    print(f'   拉新消耗: ¥{sum(merged.get("acq_cost",[0])):,.2f}')
+    print(f'   全口径消耗: ¥{sum(merged.get("acq_cost",[0])) + sum(merged.get("ret_cost",[0])):,.2f}')
     print(f'   注册会员: {sum(merged.get("acq_members",[0])):,.0f}')
     print(f'   原价GMV: ¥{sum(merged.get("org_gmv",[0])):,.2f}')
-    print(f'   交易会员: {sum(merged.get("acq_trade_members",[0])):,.0f}')
-    print(f'   下单用户: {sum(merged.get("acq_order_users",[0])) + sum(merged.get("ret_order_users",[0])):,.0f}')
+    print(f'   交易会员人数: {total_trade:,.0f}')
     print(f'   省份: {len(merged["provinces"])}个')
     
-    # Run build
+    # Rebuild
     print(f'\n🔨 运行 _build.sh ...')
     result = subprocess.run(['bash', BUILD_SCRIPT], capture_output=True, text=True, cwd=DASHBOARD_DIR)
     print(result.stdout)
     if result.returncode != 0:
-        print(f'⚠️ Build 输出: {result.stderr}')
+        print(f'⚠️ Build: {result.stderr}')
     
     # Git push
     print(f'\n📤 推送 GitHub Pages ...')
     git_result = subprocess.run(
-        ['bash', '-c', 'cd /Users/edy/Desktop/霸王茶姬看板 && git add -A && git commit -m "update: append ' + new_parsed['dates'][0] + ' data" && git push origin gh-pages'],
-        capture_output=True, text=True
+        ['bash', '-c', (
+            'cd /Users/edy/Desktop/霸王茶姬看板 '
+            '&& GIT_SSH_COMMAND="ssh -i ~/.ssh/github_dashboard" git add -A '
+            '&& GIT_SSH_COMMAND="ssh -i ~/.ssh/github_dashboard" git commit -m "update: append ' + new_parsed['dates'][0] + ' data" '
+            '&& GIT_SSH_COMMAND="ssh -i ~/.ssh/github_dashboard" git push origin gh-pages'
+        )],
+        capture_output=True, text=True, timeout=60
     )
     for line in git_result.stdout.split('\n')[-5:]:
         if line.strip():
             print(f'   {line}')
     if git_result.returncode != 0 and 'Everything up-to-date' not in git_result.stdout:
-        print(f'⚠️ Git push: {git_result.stderr[:200]}')
+        print(f'⚠️ Git: {git_result.stderr[:300]}')
+    else:
+        print(f'✅ 推送成功!')
     
     print(f'\n🎉 完成! 刷新 https://liuyihao15.github.io/-Dashboard/ 查看')
 
