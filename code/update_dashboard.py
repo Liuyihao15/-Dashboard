@@ -118,6 +118,12 @@ def safe_float(v):
     except (ValueError, TypeError):
         return 0.0
 
+def col_letter_to_index(col_str):
+    col = 0
+    for c in col_str:
+        col = col * 26 + (ord(c) - ord('A') + 1)
+    return col - 1
+
 def parse_xlsx(xlsx_path):
     """
     解析广告会员数据格式的xlsx（Sheet2）。
@@ -133,9 +139,10 @@ def parse_xlsx(xlsx_path):
     strings = [si.find('.//s:t', ns).text if si.find('.//s:t', ns) is not None else '' 
                for si in st.findall('.//s:si', ns)]
     
-    # 读 Sheet2（广告会员数据）
-    sheet2 = z.read('xl/worksheets/sheet2.xml')
-    root = ET.fromstring(sheet2)
+    # 读 Sheet（优先 Sheet2，否则 Sheet1）
+    sheet_path = 'xl/worksheets/sheet2.xml' if 'xl/worksheets/sheet2.xml' in z.namelist() else 'xl/worksheets/sheet1.xml'
+    sheet_data = z.read(sheet_path)
+    root = ET.fromstring(sheet_data)
     rows = root.findall('.//s:row', ns)
     
     daily = {}
@@ -148,7 +155,7 @@ def parse_xlsx(xlsx_path):
         for c in r.findall('s:c', ns):
             col_str = c.get('r')
             col_letter = ''.join([ch for ch in col_str if not ch.isdigit()])
-            ci = ord(col_letter) - 65  # A=0, B=1, ...
+            ci = col_letter_to_index(col_letter)  # A=0, B=1, ...
             typ = c.get('t', '')
             v = c.find('s:v', ns)
             if v is not None:

@@ -214,7 +214,7 @@ function updateKPIs(idx,target){
   let cost,members,gmv,trade,orderUsers;
   if(target==='acq'){
     cost=sumIdx(idx,'acq_cost');members=sumIdx(idx,'acq_members');
-    gmv=sumIdx(idx,'acq_gmv');trade=sumIdx(idx,'acq_trade_members');
+    gmv=sumIdx(idx,'org_gmv');trade=sumIdx(idx,'acq_trade_members')+sumIdx(idx,'ret_trade_members');
     orderUsers=sumIdx(idx,'acq_order_users');
   }else if(target==='ret'){
     cost=sumIdx(idx,'ret_cost');members=sumIdx(idx,'ret_members');
@@ -222,7 +222,7 @@ function updateKPIs(idx,target){
   }else{
     cost=sumIdxTwo(idx,'acq_cost','ret_cost');
     members=sumIdxTwo(idx,'acq_members','ret_members');
-    gmv=sumIdx(idx,'acq_gmv');trade=sumIdx(idx,'acq_trade_members');
+    gmv=sumIdx(idx,'org_gmv');trade=sumIdx(idx,'acq_trade_members')+sumIdx(idx,'ret_trade_members');
     orderUsers=sumIdxTwo(idx,'acq_order_users','ret_order_users');
   }
   const roi=gmv/(cost||1);const cac=cost/(members||1);const days=idx.length||1;
@@ -249,13 +249,13 @@ function updateWeekTable(idx,target){
   function calcCost(i){return target==='acq'?sumIdx(i,'acq_cost'):target==='ret'?sumIdx(i,'ret_cost'):sumIdxTwo(i,'acq_cost','ret_cost');}
   function calcMem(i){return target==='acq'?sumIdx(i,'acq_members'):target==='ret'?sumIdx(i,'ret_members'):sumIdxTwo(i,'acq_members','ret_members');}
   function calcOUser(i){return target==='acq'?sumIdx(i,'acq_order_users'):target==='ret'?sumIdx(i,'ret_order_users'):sumIdxTwo(i,'acq_order_users','ret_order_users');}
-  function calcTrade(i){return sumIdx(i,'acq_trade_members');}
+  function calcTrade(i){return sumIdx(i,'acq_trade_members')+sumIdx(i,'ret_trade_members');}
 
   const cCur=calcCost(curIdx),cPrev=calcCost(prevIdx);
   const oCur=calcOUser(curIdx),oPrev=calcOUser(prevIdx);
   const mCur=calcMem(curIdx),mPrev=calcMem(prevIdx);
   const tCur=calcTrade(curIdx),tPrev=calcTrade(prevIdx);
-  const gCur=sumIdx(curIdx,'acq_gmv'),gPrev=sumIdx(prevIdx,'acq_gmv');
+  const gCur=sumIdx(curIdx,'org_gmv'),gPrev=sumIdx(prevIdx,'org_gmv');
 
   const labelCur=fmtDate(D.dates[curIdx[0]])+' ~ '+fmtDate(D.dates[curIdx[curIdx.length-1]]);
   const labelPrev=prevIdx.length>0?fmtDate(D.dates[prevIdx[0]])+' ~ '+fmtDate(D.dates[prevIdx[prevIdx.length-1]]):'无数据';
