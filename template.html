@@ -52,7 +52,7 @@ body{font-family:-apple-system,"PingFang SC","Helvetica Neue",sans-serif;backgro
 </head>
 <body>
 <div class="header">
-  <div><h1>🥖 霸王茶姬 · 品牌会员投放 Dashboard V3</h1><div class="sub" id="headerSub">2026-05-01 ~ 2026-06-07 (38天) | 拉新+交易会员 | 30省</div></div>
+  <div><h1>🥖 霸王茶姬 · 品牌会员投放 Dashboard V3</h1><div class="sub" id="headerSub"></div></div>
 </div>
 
 <div class="filters">
@@ -198,6 +198,9 @@ function initFilters(){
   const sel=document.getElementById('region');
   sel.innerHTML='<option value="all">全部区域</option>';
   D.provinces.forEach(r=>{const o=document.createElement('option');o.value=r;o.textContent=r;sel.appendChild(o);});
+  // 动态页头：日期范围 + 天数 + 省份数
+  document.getElementById('headerSub').textContent=
+    fmtDate(D.dates[0])+' ~ '+fmtDate(D.dates[D.dates.length-1])+' ('+D.dates.length+'天) | 拉新+交易会员 | '+D.provinces.length+'省';
 }
 
 function applyFilter(){
